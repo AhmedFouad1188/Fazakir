@@ -1,0 +1,46 @@
+.signupcont {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.signupform {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 2vw;
+    width: 50vw;
+}
+
+input {
+    width: 20vw;
+    height: 2vw;
+}
+
+#country {
+    width: 21vw;
+    height: 2.5vw;
+    text-align: right;
+    font-size: 1rem;
+}
+
+#countrycode {
+    width: 5vw;
+    pointer-events: none;
+    box-shadow: none;
+    text-align: center;
+}
+
+#mobile {
+    text-align: left;
+    width: 14.2vw;
+}
+
+#signupsubmit {
+    width: 10vw;
+    height: 3vw;
+    cursor: pointer;
+}

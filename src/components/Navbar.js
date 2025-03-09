@@ -17,7 +17,7 @@ const Navbar = () => {
     }}>
       {/* Logo/Home Link */}
       <Link to="/" style={{ color: "#fff", textDecoration: "none", fontSize: "22px", fontWeight: "bold" }}>
-        🛍️ MyShop
+        🛍️ فذكر
       </Link>
 
       {/* Navigation Links */}

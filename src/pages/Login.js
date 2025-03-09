@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
 import { auth, googleProvider } from "../firebase"; // ✅ Import Firebase auth & Google provider
+import "./login.css"
+import { FcGoogle } from "react-icons/fc";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -15,11 +17,30 @@ const Login = () => {
 
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      console.log("User signed in:", userCredential.user);
-      navigate("/shop"); // Redirect to shop page
+      const user = userCredential.user;
+
+      if (!user.emailVerified) {
+        setError("Your email is not verified. Please check your inbox.");
+        return;
+      }
+      
+      console.log("User signed in:", user);
+      navigate("/");
     } catch (error) {
-      setError(error.message);
-      console.error("Login error:", error.message);
+      console.error("Firebase Error:", error.code); // Log the original error for debugging
+
+    // ✅ Custom error messages
+    let errorMessage = "An unknown error occurred. Please try again.";
+
+    switch (error.code) {
+      case "auth/invalid-credential":
+        errorMessage = "Incorrect Email or Password.";
+        break;
+      default:
+        errorMessage = "Something went wrong. Please try again later.";
+    }
+
+    setError(errorMessage); // ✅ Set the error message in state to display in UI
     }
   };
 
@@ -30,7 +51,7 @@ const Login = () => {
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
       console.log("Google Sign-in:", user);
-      navigate("/shop"); // Redirect to shop page
+      navigate("/");
     } catch (error) {
       setError(error.message);
       console.error("Google login failed:", error.message);
@@ -38,34 +59,31 @@ const Login = () => {
   };
 
   return (
-    <div style={{ textAlign: "center", padding: "20px" }}>
-      <h2>Login</h2>
+    <div className="login">
+      <h2>تسجيل الدخول</h2>
+
+      <form className="loginform" onSubmit={handleLogin}>
+        <div>
+          <input type="email" name="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          <label> : الايميل</label>
+        </div>
+        <div>
+          <input type="password" id="loginpass" name="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+          <label> : كلمة السر</label>
+        </div>
+        <button type="submit" id="loginsubmit">تسجيل الدخول</button>
+      </form>
 
       {error && <p style={{ color: "red" }}>{error}</p>} {/* Display error message */}
 
-      <form onSubmit={handleLogin} style={{ marginBottom: "20px" }}>
-        <div>
-          <label>Email:</label>
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-        </div>
-        <div>
-          <label>Password:</label>
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-        </div>
-        <button type="submit">Login</button>
-      </form>
+      <p>هل نسيت كلمة السر ؟ <Link to="/forgot-password">إضغط هنا</Link></p>
 
-      <p>Don't have an account? <Link to="/signup">Sign up here</Link></p>
+      <p>لا يوجد حساب لديك ؟ <Link to="/signup">أنشىء حساب هنا</Link></p>
 
-      <hr style={{ margin: "20px 0" }} />
+      <hr/>
 
       {/* Google Login Button */}
-      <button 
-        onClick={handleGoogleLogin} 
-        style={{ background: "#4285F4", color: "#fff", padding: "10px 15px", border: "none", borderRadius: "5px", cursor: "pointer" }}
-      >
-        Sign in with Google
-      </button>
+      <button className="googlelogin" onClick={handleGoogleLogin}><FcGoogle size={27} style={{marginRight: "0.8vw"}} />سجل الدخول بواسطة جوجل</button>
     </div>
   );
 };
