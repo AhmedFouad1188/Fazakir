@@ -237,7 +237,7 @@ const Signup = () => {
       const user = userCredential.user;
       console.log("User signed up:", user);
 
-      const response = await fetch("http://localhost/fazakir/signupdata.php", {
+      const response = await fetch("./signupdata.php", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",

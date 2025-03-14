@@ -1,24 +1,37 @@
-import ProductCard from "./ProductCard"; // Import the ProductCard component
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 
-const ProductList = ({ products }) => {
+const ProductList = () => {
+  const [products, setProducts] = useState([]);
+
+  useEffect(() => {
+    axios
+      .get("http://localhost:5000/products") // Backend API endpoint
+      .then((response) => {
+        console.log("Fetched products:", response.data); // Debugging
+        setProducts(response.data);
+      })
+      .catch((error) => {
+        console.error("Error fetching products:", error);
+      });
+  }, []);
+
   return (
-    <div style={styles.container}>
-      {products.length === 0 ? (
-        <p>No products available</p>
-      ) : (
-        products.map((product) => <ProductCard key={product.id} product={product} />)
-      )}
+    <div>
+      <h2>Product List</h2>
+      <ul>
+        {products.length > 0 ? (
+          products.map((product) => (
+            <li key={product.id}>
+              {product.name} - ${product.price}
+            </li>
+          ))
+        ) : (
+          <p>No products found.</p>
+        )}
+      </ul>
     </div>
   );
-};
-
-const styles = {
-  container: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-    gap: "20px",
-    padding: "20px",
-  },
 };
 
 export default ProductList;

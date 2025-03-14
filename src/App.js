@@ -11,6 +11,7 @@ import Signup from "./pages/Signup";
 import Account from "./pages/Account";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
+import Dashboard from "./pages/Dashboard";
 import { CartProvider } from "./context/CartContext"; // Import CartProvider
 import "./styles.css"
 
@@ -31,6 +32,7 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/account" element={user ? <Account /> : <Login />} />
+          <Route path="/admin" element={<Dashboard />} />
         </Routes>
         <Footer />
       </Router>
