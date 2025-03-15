@@ -8,6 +8,7 @@ require("dotenv").config();
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true })); // Allows parsing JSON in request body
 
 // Database Connection (MySQL)
 const db = mysql.createConnection({
@@ -28,7 +29,8 @@ db.connect((err) => {
 
 // Import Routes
 const productsRoutes = require("./routes/products");
-app.use("/api/products", productsRoutes); // Use products route
+app.use("/", productsRoutes); // Use products route
+app.use("/uploads", express.static("uploads")); // 👈 Serve uploaded images
 
 // Register User (Sign Up)
 app.post("/register", async (req, res) => {
