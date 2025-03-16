@@ -1,6 +1,8 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
-import { useSelector } from "react-redux";
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { loadCart } from "./redux/cartSlice";
 import Home from "./pages/Home";
 import Shop from "./pages/Shop";
 import CartPage from "./pages/Cart";
@@ -16,7 +18,14 @@ import { CartProvider } from "./context/CartContext"; // Import CartProvider
 import "./styles.css"
 
 function App() {
+  const dispatch = useDispatch();
   const user = useSelector((state) => state.user?.user); // Get user from Redux
+  
+  useEffect(() => {
+    if (user) {
+      dispatch(loadCart(user.id));
+    }
+  }, [user, dispatch]);
   
   return (
     <AuthProvider>

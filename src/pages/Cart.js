@@ -1,6 +1,8 @@
 import React from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { removeFromCart } from "../redux/cartSlice";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const CartPage  = () => {
   const cartItems = useSelector((state) => state.cart.items) || []; // ✅ Ensure it's always an array
@@ -13,9 +15,18 @@ const CartPage  = () => {
     return acc + price * quantity;
   }, 0);
 
+  const handleRemove = (id, name) => {
+    dispatch(removeFromCart(id));
+    toast.error(`${name} removed from cart!`, {
+      position: "top-right",
+      autoClose: 2000,
+    });
+  };
+
   return (
     <div style={{ textAlign: "center", padding: "20px" }}>
       <h2>Shopping Cart</h2>
+      <ToastContainer />
 
       {cartItems.length === 0 ? (
         <p>Your cart is empty.</p>
@@ -30,7 +41,7 @@ const CartPage  = () => {
                   style={{ width: "15vw", objectFit: "cover", borderRadius: "5px" }}
                 />
                   {item.name} - ${Number(item.price || 0).toFixed(2)} x {item.quantity}
-                <button onClick={() => dispatch(removeFromCart(item.id))} style={{ marginLeft: "10px" }}>
+                <button onClick={() => handleRemove(item.id, item.name)} style={{ marginLeft: "10px" }}>
                   Remove
                 </button>
               </li>

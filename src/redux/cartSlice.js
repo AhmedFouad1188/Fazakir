@@ -1,4 +1,16 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import axios from "axios";
+
+// ✅ Load cart from database
+export const loadCart = createAsyncThunk("cart/loadCart", async (userId) => {
+  const response = await axios.get(`http://localhost/get_cart.php?user_id=${userId}`);
+  return response.data;
+});
+
+// ✅ Save cart to database
+export const saveCart = createAsyncThunk("cart/saveCart", async ({ userId, cart }) => {
+  await axios.post("http://localhost/save_cart.php", { user_id: userId, cart });
+});
 
 const cartSlice = createSlice({
   name: "cart",

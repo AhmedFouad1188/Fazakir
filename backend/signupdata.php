@@ -40,7 +40,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $full_mobile_number = $countrycode . $mobile;
 
         // ✅ Database connection
-        $conn = new mysqli('localhost', 'root', '', 'fazakir');
+        $conn = new mysqli('localhost', 'root', '123456', 'shopdb');
 
         if ($conn->connect_error) {
             echo json_encode(["error" => "Database connection failed: " . $conn->connect_error]);
@@ -48,7 +48,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
 
         // ✅ Insert data into the database
-        $stmt = $conn->prepare("INSERT INTO data (firstname, lastname, country, mobile, email) VALUES (?, ?, ?, ?, ?)");
+        $stmt = $conn->prepare("INSERT INTO users (firstname, lastname, country, mobile, email) VALUES (?, ?, ?, ?, ?)");
 
         if (!$stmt) {
             echo json_encode(["error" => "Prepare failed: " . $conn->error]);
