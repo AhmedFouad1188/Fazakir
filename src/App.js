@@ -3,7 +3,7 @@ import { AuthProvider } from "./context/AuthContext";
 import { useSelector } from "react-redux";
 import Home from "./pages/Home";
 import Shop from "./pages/Shop";
-import Cart from "./pages/Cart";
+import CartPage from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import Login from "./pages/Login";
 import ForgotPassword from "./pages/forgot-password";
@@ -16,7 +16,7 @@ import { CartProvider } from "./context/CartContext"; // Import CartProvider
 import "./styles.css"
 
 function App() {
-  const user = useSelector((state) => state.auth.user); // Get user from Redux
+  const user = useSelector((state) => state.user?.user); // Get user from Redux
   
   return (
     <AuthProvider>
@@ -26,7 +26,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/shop" element={<Shop />} />
-          <Route path="/cart" element={<Cart />} />
+          <Route path="/cart" element={<CartPage />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/login" element={<Login />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />

@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { useAuth } from "../context/AuthContext";
+import Cart from "../components/Cart"; // ✅ Import Cart component
 
 const Navbar = () => {
   const { user, logout } = useAuth();
@@ -25,29 +26,7 @@ const Navbar = () => {
         <Link to="/shop" style={{ color: "#fff", textDecoration: "none" }}>Shop</Link>
 
         {/* Cart Link with Badge */}
-        <Link to="/cart" style={{ 
-          color: "#fff", 
-          textDecoration: "none", 
-          position: "relative", 
-          fontSize: "18px" 
-        }}>
-          🛒 Cart
-          {totalItems > 0 && (
-            <span style={{
-              position: "absolute",
-              top: "-8px",
-              right: "-12px",
-              background: "red",
-              color: "#fff",
-              borderRadius: "50%",
-              padding: "5px 10px",
-              fontSize: "12px",
-              fontWeight: "bold"
-            }}>
-              {totalItems}
-            </span>
-          )}
-        </Link>
+        <Cart /> {/* ✅ Show cart icon with count */}
 
         {user ? (
           <>

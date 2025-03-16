@@ -1,20 +1,15 @@
-import { useContext } from "react";
-import { CartContext } from "../context/CartContext";
+import React from "react";
+import { useSelector } from "react-redux";
+import { Link } from "react-router-dom";
 
 const Cart = () => {
-  const { cart, removeFromCart } = useContext(CartContext);
+  const cartItems = useSelector((state) => state.cart);
 
   return (
-    <div>
-      <h1>Shopping Cart</h1>
-      {cart.length === 0 ? <p>Cart is empty</p> : null}
-      {cart.map((item) => (
-        <div key={item.id}>
-          <h3>{item.title}</h3>
-          <p>${item.price}</p>
-          <button onClick={() => removeFromCart(item.id)}>Remove</button>
-        </div>
-      ))}
+    <div style={{ position: "relative", padding: "10px" }}>
+      <Link to="/cart" style={{ textDecoration: "none", color: "black" }}>
+        🛒 Cart ({cartItems.length})
+      </Link>
     </div>
   );
 };

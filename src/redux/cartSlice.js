@@ -1,38 +1,29 @@
 import { createSlice } from "@reduxjs/toolkit";
 
-const initialState = {
-  cartItems: [],
-  totalQuantity: 0,  // ✅ Track total items
-  totalPrice: 0,
-};
-
 const cartSlice = createSlice({
   name: "cart",
-  initialState,
+  initialState: {
+    items: [], // ✅ Store cart items in an `items` array
+  },
   reducers: {
     addToCart: (state, action) => {
-      const item = action.payload;
-      const existingItem = state.cartItems.find((i) => i.id === item.id);
-
+      const existingItem = state.items.find((item) => item.id === action.payload.id);
       if (existingItem) {
-        existingItem.quantity += 1;
+        existingItem.quantity += action.payload.quantity;
       } else {
-        state.cartItems.push({ ...item, quantity: 1 });
+        state.items.push({
+          ...action.payload,
+          quantity: action.payload.quantity || 1, // ✅ Ensure quantity is at least 1
+          price: action.payload.price || 0, // ✅ Ensure price is not undefined
+        });
       }
-
-      state.totalQuantity += 1; // ✅ Increment total items
-      state.totalPrice += item.price;
     },
     removeFromCart: (state, action) => {
-      const id = action.payload;
-      const existingItem = state.cartItems.find((i) => i.id === id);
-
-      if (existingItem) {
-        state.totalQuantity -= existingItem.quantity; // ✅ Decrement total items
-        state.totalPrice -= existingItem.price * existingItem.quantity;
-        state.cartItems = state.cartItems.filter((i) => i.id !== id);
+      const index = state.items.findIndex((item) => item.id === action.payload);
+      if (index !== -1) {
+        state.items.splice(index, 1); // ✅ Remove item from array
       }
-    },
+    },    
   },
 });
 
