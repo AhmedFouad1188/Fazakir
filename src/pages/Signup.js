@@ -231,29 +231,49 @@ const Signup = () => {
   };
 
   const handleSignup = async () => {
-    try {
-      // ✅ Create user with email and password
+    try {  
+      // First, create Firebase user
       const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
       const user = userCredential.user;
+  
       console.log("User signed up:", user);
-
-      const response = await fetch("http://localhost/signupdata.php", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
-      const data = await response.text(); // Read response as text
-      console.log("Server Response:", data);
-
-      // ✅ Send verification email
+  
+      // Send verification email
       await sendEmailVerification(user);
       console.log("Verification email sent!");
-
-      setError("A verification email has been sent. Please check your inbox and verify your email before logging in.");
-
+  
+      setError("A verification email has been sent. Please check your email inbox or junk folder before logging in.");
       navigate("/");
+
+      // ✅ Get Firebase ID Token
+      const idToken = await user.getIdToken();
+
+      //send user data (without password) to the backend
+      const response = await fetch("http://localhost:5000/auth", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${idToken}` // Send Firebase ID Token for verification
+      },
+        body: JSON.stringify({
+          firstname: formData.firstname,
+          lastname: formData.lastname,
+          country: formData.country,
+          countrycode: formData.countrycode,
+          mobile: formData.mobile,
+          email: formData.email,
+          idToken
+      }),
+    });
+  
+      const result = await response.json(); // Expect JSON response
+  
+      if (!response.ok) {
+        throw new Error(result.message || "Signup failed. Try again.");
+      }
+  
+      console.log("Server Response:", result);
+
     } catch (error) {
       console.error("Firebase Error:", error.code); // Log the original error for debugging
 
@@ -262,39 +282,39 @@ const Signup = () => {
 
     if (error.code === "auth/email-already-in-use") {
       errorMessage = "This email is already registered. Try logging in.";
-    } else if (error.code.includes("password")) {
+    } else if (error.code && error.code.includes("password")) {
       errorMessage = "Password length must be 10 - 20 characters and contains at least one uppercase, one lowercase and one numeric character.";
     } else {
       errorMessage = error.message; // Use Firebase default if we don't handle it
     }
 
     setError(errorMessage);
-    }
-  };
+    };
+  }
 
   return (
     <div className="signupcont">
       <h2>أنشىء حساب جديد</h2>
 
       <form className="signupform" onSubmit={(e) => { e.preventDefault(); handleSignup(); }}>
-        <label for="lastname">
+        <label htmlFor="lastname">
         <input type="text" id="lastname" name="lastname" placeholder="* الإسم الأخير" onChange={handleChange} required></input>
         </label>
 
-        <label for="firstname">
+        <label htmlFor="firstname">
         <input type="text" id="firstname" name="firstname" placeholder="* الإسم الأول" onChange={handleChange} required></input>
         </label>
 
         <div>
-        <label for="countrycode">
+        <label htmlFor="countrycode">
         <input type="text" id="countrycode" name="countrycode" value={selectedCountry.dial_code} onChange={handleChange} readOnly/>
         </label>
-        <label for="mobile">
+        <label htmlFor="mobile">
         <input type="tel" id="mobile" name="mobile" maxLength={selectedCountry.length} title={`Please enter ${selectedCountry.length} digits for the mobile number`} placeholder="* رقم الموبايل" onChange={handleChange} required/>
         </label>
         </div>
 
-        <label for="country">
+        <label htmlFor="country">
         <select id="country" name="country" value={selectedCountry.name} onChange={handleCountryChange} required>
           {countries.map((country) => (
             <option key={country.name} value={country.name}>
@@ -304,11 +324,11 @@ const Signup = () => {
         </select>
         </label>
 
-        <label for="password">
+        <label htmlFor="password">
         <input type="password" id="password" name="password" placeholder="* كلمة السر" onChange={handleChange} required />
         </label>
 
-        <label for="email">
+        <label htmlFor="email">
         <input type="email" id="email" name="email" placeholder="* البريد الالكترونى" onChange={handleChange} required />
         </label>
 

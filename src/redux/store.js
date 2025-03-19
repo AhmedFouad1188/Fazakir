@@ -5,7 +5,7 @@ import userReducer from "./authSlice"; // ✅ Import userReducer
 const store = configureStore({
   reducer: {
     cart: cartReducer,
-    user: userReducer, // ✅ Add userReducer
+    auth: userReducer, // ✅ Add userReducer
   },
 });
 

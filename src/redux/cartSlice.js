@@ -1,43 +1,83 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import axios from "axios";
 
-// ✅ Load cart from database
-export const loadCart = createAsyncThunk("cart/loadCart", async (userId) => {
-  const response = await axios.get(`http://localhost/get_cart.php?user_id=${userId}`);
-  return response.data;
+// ✅ Base URL for the backend API
+const API_URL = "http://localhost:5000/cart"; 
+
+// ✅ Fetch cart from backend
+export const fetchCart = createAsyncThunk("cart/fetchCart", async (_, { getState }) => {
+  const token = getState().auth.token;
+  const response = await fetch(API_URL, {
+    method: "GET",
+    headers: {
+      "Authorization": `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  });
+  if (!response.ok) throw new Error("Failed to fetch cart");
+  return await response.json(); // Return cart data from backend
 });
 
-// ✅ Save cart to database
-export const saveCart = createAsyncThunk("cart/saveCart", async ({ userId, cart }) => {
-  await axios.post("http://localhost/save_cart.php", { user_id: userId, cart });
+// ✅ Add item to cart in backend
+export const addToCart = createAsyncThunk("cart/addToCart", async (item, { getState }) => {
+  const token = getState().auth.token;
+  const response = await fetch(API_URL, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(item),
+  });
+  if (!response.ok) throw new Error("Failed to add item to cart");
+  return await response.json(); // Return updated cart item from backend
+});
+
+// ✅ Remove item from cart in backend
+export const removeFromCart = createAsyncThunk("cart/removeFromCart", async (itemId, { getState }) => {
+  const token = getState().auth.token;
+  const response = await fetch(`${API_URL}/${itemId}`, {
+    method: "DELETE",
+    headers: {
+      "Authorization": `Bearer ${token}`,
+    },
+  });
+  if (!response.ok) throw new Error("Failed to remove item from cart");
+  return itemId; // Return deleted item ID
 });
 
 const cartSlice = createSlice({
   name: "cart",
   initialState: {
-    items: [], // ✅ Store cart items in an `items` array
+    items: [], // ✅ Cart items stored here
+    status: "idle",
+    error: null,
   },
-  reducers: {
-    addToCart: (state, action) => {
-      const existingItem = state.items.find((item) => item.id === action.payload.id);
-      if (existingItem) {
-        existingItem.quantity += action.payload.quantity;
-      } else {
-        state.items.push({
-          ...action.payload,
-          quantity: action.payload.quantity || 1, // ✅ Ensure quantity is at least 1
-          price: action.payload.price || 0, // ✅ Ensure price is not undefined
-        });
-      }
-    },
-    removeFromCart: (state, action) => {
-      const index = state.items.findIndex((item) => item.id === action.payload);
-      if (index !== -1) {
-        state.items.splice(index, 1); // ✅ Remove item from array
-      }
-    },    
+  reducers: {},
+  extraReducers: (builder) => {
+    builder
+      // ✅ Handle fetch cart
+      .addCase(fetchCart.pending, (state) => {
+        state.status = "loading";
+      })
+      .addCase(fetchCart.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        state.items = action.payload; // ✅ Set cart items from backend
+      })
+      .addCase(fetchCart.rejected, (state, action) => {
+        state.status = "failed";
+        state.error = action.error.message;
+      })
+
+      // ✅ Handle add to cart
+      .addCase(addToCart.fulfilled, (state, action) => {
+        state.items.push(action.payload); // ✅ Update cart with new item
+      })
+
+      // ✅ Handle remove from cart
+      .addCase(removeFromCart.fulfilled, (state, action) => {
+        state.items = state.items.filter((item) => item.id !== action.payload);
+      });
   },
 });
 
-export const { addToCart, removeFromCart } = cartSlice.actions;
 export default cartSlice.reducer;

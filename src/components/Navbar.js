@@ -1,11 +1,17 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { useAuth } from "../context/AuthContext";
 import Cart from "../components/Cart"; // ✅ Import Cart component
 
 const Navbar = () => {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const totalItems = useSelector((state) => state.cart.totalQuantity); // Get total quantity from Redux
+  
+  const handleLogout = async () => {
+    await logout();
+    navigate("/login"); // ✅ Redirect to login page after logout
+  };
 
   return (
     <nav style={{ 
@@ -30,9 +36,9 @@ const Navbar = () => {
 
         {user ? (
           <>
-            <Link to="/account" style={{ color: "#fff", textDecoration: "none" }}>Account</Link>
+            <Link to="/profile">Profile</Link>
             <button 
-              onClick={logout} 
+              onClick={handleLogout} 
               style={{ 
                 background: "red", 
                 color: "#fff", 

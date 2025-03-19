@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
-import { auth, googleProvider } from "../firebase"; // ✅ Import Firebase auth & Google provider
-import "./login.css"
+import { useAuth } from "../context/AuthContext"; // ✅ Use AuthContext
+import "./login.css";
 import { FcGoogle } from "react-icons/fc";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const { login, googleLogin } = useAuth(); // ✅ Get auth functions from context
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
@@ -16,31 +16,37 @@ const Login = () => {
     setError(""); // Clear previous errors
 
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await login(email, password);
       const user = userCredential.user;
 
       if (!user.emailVerified) {
         setError("Your email is not verified. Please check your inbox.");
         return;
       }
-      
+
       console.log("User signed in:", user);
-      navigate("/");
+      navigate("/"); // ✅ Redirect to homepage
     } catch (error) {
-      console.error("Firebase Error:", error.code); // Log the original error for debugging
+      console.error("Firebase Error:", error.code);
 
-    // ✅ Custom error messages
-    let errorMessage = "An unknown error occurred. Please try again.";
+      // ✅ Custom error messages
+      let errorMessage = "An unknown error occurred. Please try again.";
 
-    switch (error.code) {
-      case "auth/invalid-credential":
-        errorMessage = "Incorrect Email or Password.";
-        break;
-      default:
-        errorMessage = "Something went wrong. Please try again later.";
-    }
+      switch (error.code) {
+        case "auth/invalid-credential":
+          errorMessage = "Incorrect Email or Password.";
+          break;
+        case "auth/user-not-found":
+          errorMessage = "No account found with this email.";
+          break;
+        case "auth/wrong-password":
+          errorMessage = "Incorrect password.";
+          break;
+        default:
+          errorMessage = "Something went wrong. Please try again later.";
+      }
 
-    setError(errorMessage); // ✅ Set the error message in state to display in UI
+      setError(errorMessage);
     }
   };
 
@@ -48,12 +54,11 @@ const Login = () => {
     setError(""); // Clear previous errors
 
     try {
-      const result = await signInWithPopup(auth, googleProvider);
-      const user = result.user;
-      console.log("Google Sign-in:", user);
-      navigate("/");
+      const result = await googleLogin();
+      console.log("Google Sign-in:", result.user);
+      navigate("/"); // ✅ Redirect to homepage
     } catch (error) {
-      setError(error.message);
+      setError("Google login failed. Please try again.");
       console.error("Google login failed:", error.message);
     }
   };
@@ -83,7 +88,9 @@ const Login = () => {
       <hr/>
 
       {/* Google Login Button */}
-      <button className="googlelogin" onClick={handleGoogleLogin}><FcGoogle size={27} style={{marginRight: "0.8vw"}} />سجل الدخول بواسطة جوجل</button>
+      <button className="googlelogin" onClick={handleGoogleLogin}>
+        <FcGoogle size={27} style={{ marginRight: "0.8vw" }} />سجل الدخول بواسطة جوجل
+      </button>
     </div>
   );
 };
