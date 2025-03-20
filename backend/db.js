@@ -26,24 +26,12 @@ const db = mysql.createPool({
 // ✅ Test database connection at startup
 (async () => {
   try {
-    const connection = await db.getConnection();
+    await db.getConnection(); // No need to store/release connection separately
     console.log("✅ Database connected successfully!");
-    connection.release(); // Release connection back to pool
   } catch (err) {
     console.error("❌ Database connection failed:", err.message);
     process.exit(1); // Exit process if DB is not connected
   }
 })();
-
-// ✅ Auto-reconnect on connection loss
-db.on("error", (err) => {
-  console.error("❌ MySQL Pool Error:", err);
-  if (err.code === "PROTOCOL_CONNECTION_LOST") {
-    console.log("🔄 Reconnecting to database...");
-    db.getConnection()
-      .then((conn) => conn.release())
-      .catch((err) => console.error("❌ Reconnection failed:", err.message));
-  }
-});
 
 module.exports = db;

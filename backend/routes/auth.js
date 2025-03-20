@@ -1,28 +1,14 @@
 const express = require("express");
+const { authenticateFirebaseToken } = require("../middleware/firebaseAuthMiddleware");
 const db = require("../db"); // Import MySQL connection
-const admin = require("firebase-admin");
 const router = express.Router();
 
-// Check if Firebase is already initialized
-if (!admin.apps.length) {
-  const serviceAccount = require("../serviceAccountKey.json");
-
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-  });
-}
-
 // User Registration (Verify Firebase ID Token)
-router.post("/", async (req, res) => {
-  const { firstname, lastname, country, countrycode, mobile, email, idToken } = req.body;
-
-  if (!idToken) {
-    return res.status(401).json({ error: "Unauthorized. No token provided." });
-  }
+router.post("/", authenticateFirebaseToken, async (req, res) => {
+  const { firstname, lastname, country, countrycode, mobile, email } = req.body;
 
   try {
-    // 🔹 Verify Firebase ID Token
-    const decodedToken = await admin.auth().verifyIdToken(idToken);
+    // 🔹 Firebase ID Token
     const firebaseUID = decodedToken.uid; // Unique user ID from Firebase
 
     // 🔹 Store user in MySQL (without password)

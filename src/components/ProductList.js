@@ -55,10 +55,13 @@ const ProductList = () => {
       return;
     }
 
-    const cartItem = { ...product, quantity: quantities[product.id], userId: user.id };
-
+    const cartItem = { 
+      userId: user.uid, 
+      productId: product.id, 
+      quantity: quantities[product.id] 
+    };
+    
     try {
-      await axios.post("http://localhost:5000/cart", cartItem); // ✅ Sync with backend
       dispatch(addToCart(cartItem)); // ✅ Update Redux store
 
       toast.success(`${product.name} added to cart!`, {

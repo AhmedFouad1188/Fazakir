@@ -1,13 +1,13 @@
 const express = require("express");
+const { authenticateFirebaseToken } = require("../middleware/firebaseAuthMiddleware");
 const router = express.Router();
 const db = require("../db"); // Your MySQL connection setup
-const { authenticateToken } = require("../middleware/authMiddleware"); // ✅ Ensure user is logged in
 
 // ✅ Fetch user's cart
-router.get("/", authenticateToken, async (req, res) => {
-  const userId = req.user.id;
+router.get("/", authenticateFirebaseToken, async (req, res) => {
+  const firebaseUID = decodedToken.uid; // Unique user ID from Firebase
   try {
-    const [cartItems] = await db.query("SELECT * FROM cart WHERE user_id = ?", [userId]);
+    const [cartItems] = await db.query("SELECT * FROM cart WHERE firebase_uid = ?", [firebaseUID]);
     res.json(cartItems);
   } catch (error) {
     console.error("Error fetching cart:", error);
@@ -16,27 +16,28 @@ router.get("/", authenticateToken, async (req, res) => {
 });
 
 // ✅ Add item to cart
-router.post("/", authenticateToken, async (req, res) => {
-  const userId = req.user.id;
-  const { product_id, name, price, image_url, quantity } = req.body;
+router.post("/", authenticateFirebaseToken, async (req, res) => {
   try {
+    const { productId, quantity } = req.body;
+    const firebaseUID = decodedToken.uid; // Unique user ID from Firebase
+
     await db.query(
-      "INSERT INTO cart (user_id, product_id, name, price, image_url, quantity) VALUES (?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE quantity = quantity + ?",
-      [userId, product_id, name, price, image_url, quantity, quantity]
+      "INSERT INTO cart (firebase_uid, product_id, quantity) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE quantity = quantity + ?",
+      [firebaseUID, productId, quantity, quantity]
     );
-    res.json({ success: true, message: "Item added to cart" });
+
+    res.json({ ...product, quantity }); // ✅ Return full product details with quantity
   } catch (error) {
-    console.error("Error adding to cart:", error);
-    res.status(500).json({ error: "Server error" });
+    res.status(500).json({ error: "Failed to add item to cart" });
   }
 });
 
 // ✅ Remove item from cart
-router.delete("/:id", authenticateToken, async (req, res) => {
-  const userId = req.user.id;
-  const itemId = req.params.id;
+router.delete("/:id", authenticateFirebaseToken, async (req, res) => {
+  const firebaseUID = decodedToken.uid;
+  const product_id = req.params.id;
   try {
-    await db.query("DELETE FROM cart WHERE id = ? AND user_id = ?", [itemId, userId]);
+    await db.query("DELETE FROM cart WHERE product_id = ? AND firebase_uid = ?", [productId, firebaseUID]);
     res.json({ success: true, message: "Item removed from cart" });
   } catch (error) {
     console.error("Error removing from cart:", error);

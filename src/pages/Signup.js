@@ -262,7 +262,6 @@ const Signup = () => {
           countrycode: formData.countrycode,
           mobile: formData.mobile,
           email: formData.email,
-          idToken
       }),
     });
   

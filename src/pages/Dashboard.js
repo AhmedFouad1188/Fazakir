@@ -9,6 +9,7 @@ const Dashboard = () => {
     name: "",
     price: "",
     description: "",
+    stock: "",
     image_url: "",
   });
   const [imageFile, setImageFile] = useState(null);
@@ -47,6 +48,7 @@ const Dashboard = () => {
     formData.append("name", product.name);
     formData.append("price", product.price);
     formData.append("description", product.description);
+    formData.append("stock", product.stock);
     if (imageFile) {
       formData.append("image", imageFile);
     } else {
@@ -66,7 +68,7 @@ const Dashboard = () => {
         toast.success("Product added successfully");
       }
 
-      setProduct({ name: "", price: "", description: "", image_url: "" });
+      setProduct({ name: "", price: "", description: "", stock: "", image_url: "" });
       setImageFile(null);
       setPreview(null);
       setEditingProductId(null);
@@ -78,7 +80,7 @@ const Dashboard = () => {
 
   const handleEdit = (product) => {
     setEditingProductId(product.id);
-    setProduct({ name: product.name, price: product.price, description: product.description, image_url: product.image_url });
+    setProduct({ name: product.name, price: product.price, description: product.description, stock: product.stock, image_url: product.image_url });
     setPreview(product.image_url ? `http://localhost:5000${product.image_url}` : null);
   };
 
@@ -104,6 +106,7 @@ const Dashboard = () => {
         <input type="text" name="name" placeholder="Product Name" value={product.name} onChange={handleChange} required />
         <input type="number" name="price" placeholder="Price" value={product.price} onChange={handleChange} required />
         <input type="text" name="description" placeholder="Description" value={product.description} onChange={handleChange} required />
+        <input type="number" name="stock" placeholder="Stock" value={product.stock} onChange={handleChange} required />
         <input type="file" name="image" accept="image/*" onChange={handleImageChange} />
         {preview && <img src={preview} alt="Preview" width="100" />}
         <button type="submit">{editingProductId ? "Update Product" : "Add Product"}</button>
@@ -117,6 +120,7 @@ const Dashboard = () => {
               <th>Name</th>
               <th>Price</th>
               <th>Description</th>
+              <th>Stock</th>
               <th>Image</th>
               <th>Actions</th>
             </tr>
@@ -127,6 +131,7 @@ const Dashboard = () => {
                 <td>{product.name}</td>
                 <td>${product.price}</td>
                 <td>{product.description}</td>
+                <td>{product.stock}</td>
                 <td>{product.image_url && <img src={`http://localhost:5000${product.image_url}`} alt={product.name} width="50" />}</td>
                 <td>
                   <button onClick={() => handleEdit(product)}>Edit</button>

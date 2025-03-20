@@ -3,7 +3,6 @@ const db = require("../db"); // Database connection
 const multer = require("multer");
 const path = require("path");
 const { body, validationResult } = require("express-validator");
-require("dotenv").config();
 
 const router = express.Router();
 
@@ -29,6 +28,7 @@ const validateProduct = [
   body("name").trim().notEmpty().withMessage("Name is required"),
   body("price").isFloat({ gt: 0 }).withMessage("Price must be a positive number"),
   body("description").optional().trim(),
+  body("stock").trim().notEmpty().withMessage("Stock is required"),
   (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -40,15 +40,15 @@ const validateProduct = [
 
 // ✅ Create Product (POST)
 router.post("/", upload.single("image"), validateProduct, async (req, res) => {
-  const { name, price, description } = req.body;
+  const { name, price, description, stock } = req.body;
   const image_url = req.file ? `/uploads/${req.file.filename}` : "/uploads/default.png";
 
   try {
     const [result] = await db.execute(
-      "INSERT INTO products (name, price, description, image_url) VALUES (?, ?, ?, ?)",
-      [name, price, description, image_url]
+      "INSERT INTO products (name, price, description, image_url, stock) VALUES (?, ?, ?, ?, ?)",
+      [name, price, description, image_url, stock || 0]
     );
-    res.status(201).json({ id: result.insertId, name, price, description, image_url });
+    res.status(201).json({ id: result.insertId, name, price, description, image_url, stock: stock || 0 });
   } catch (err) {
     console.error("Database error:", err);
     res.status(500).json({ error: "Failed to insert product" });

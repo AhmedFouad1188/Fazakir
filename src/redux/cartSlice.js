@@ -1,82 +1,80 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import axios from "axios";
 
-// ✅ Base URL for the backend API
-const API_URL = "http://localhost:5000/cart"; 
-
-// ✅ Fetch cart from backend
+// Fetch cart items from backend
 export const fetchCart = createAsyncThunk("cart/fetchCart", async (_, { getState }) => {
-  const token = getState().auth.token;
-  const response = await fetch(API_URL, {
-    method: "GET",
-    headers: {
-      "Authorization": `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
+  const user = getState().auth.user; // Get logged-in user
+  if (!user?.token) throw new Error("User not authenticated");
+
+  const response = await axios.get("http://localhost:5000/cart", {
+    headers: { Authorization: `Bearer ${user.token}` },
   });
-  if (!response.ok) throw new Error("Failed to fetch cart");
-  return await response.json(); // Return cart data from backend
+  return response.data; // Backend should return cart items
 });
 
-// ✅ Add item to cart in backend
-export const addToCart = createAsyncThunk("cart/addToCart", async (item, { getState }) => {
-  const token = getState().auth.token;
-  const response = await fetch(API_URL, {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(item),
-  });
-  if (!response.ok) throw new Error("Failed to add item to cart");
-  return await response.json(); // Return updated cart item from backend
-});
+// ✅ Async action to add item to cart in backend
+export const addToCart = createAsyncThunk(
+  "cart/addToCart",
+  async ({ userId, productId, quantity }, { getState, rejectWithValue }) => {
+    try {
+      const user = getState().auth.user;
+      if (!user) return rejectWithValue("User not authenticated");
 
-// ✅ Remove item from cart in backend
-export const removeFromCart = createAsyncThunk("cart/removeFromCart", async (itemId, { getState }) => {
-  const token = getState().auth.token;
-  const response = await fetch(`${API_URL}/${itemId}`, {
-    method: "DELETE",
-    headers: {
-      "Authorization": `Bearer ${token}`,
-    },
-  });
-  if (!response.ok) throw new Error("Failed to remove item from cart");
-  return itemId; // Return deleted item ID
+      const response = await axios.post(
+        "http://localhost:5000/cart",
+        { userId, productId, quantity },
+        { headers: { Authorization: `Bearer ${user.token}` } }
+      );
+
+      return response.data; // ✅ Return the full cart item from backend
+    } catch (error) {
+      return rejectWithValue(error.response.data);
+    }
+  }
+);
+
+// Remove item from cart
+export const removeFromCart = createAsyncThunk("cart/removeFromCart", async (id, { getState, rejectWithValue }) => {
+  try {
+    const user = getState().auth.user;
+    if (!user) return rejectWithValue("User not authenticated");
+
+    await axios.delete(`http://localhost:5000/cart/${id}`, {
+      headers: { Authorization: `Bearer ${user.token}` },
+    });
+
+    return id; // Return removed item ID to update Redux store
+  } catch (error) {
+    return rejectWithValue(error.response?.data || "Failed to remove item");
+  }
 });
 
 const cartSlice = createSlice({
   name: "cart",
-  initialState: {
-    items: [], // ✅ Cart items stored here
-    status: "idle",
-    error: null,
-  },
+  initialState: { items: [], status: "idle", error: null },
   reducers: {},
   extraReducers: (builder) => {
     builder
-      // ✅ Handle fetch cart
       .addCase(fetchCart.pending, (state) => {
         state.status = "loading";
       })
       .addCase(fetchCart.fulfilled, (state, action) => {
         state.status = "succeeded";
-        state.items = action.payload; // ✅ Set cart items from backend
+        state.items = action.payload;
       })
       .addCase(fetchCart.rejected, (state, action) => {
         state.status = "failed";
-        state.error = action.error.message;
+        state.error = action.payload;
       })
-
-      // ✅ Handle add to cart
-      .addCase(addToCart.fulfilled, (state, action) => {
-        state.items.push(action.payload); // ✅ Update cart with new item
-      })
-
-      // ✅ Handle remove from cart
       .addCase(removeFromCart.fulfilled, (state, action) => {
         state.items = state.items.filter((item) => item.id !== action.payload);
-      });
+      })
+      .addCase(addToCart.fulfilled, (state, action) => {
+        state.items.push(action.payload); // ✅ Add full item from backend
+      })      
+      .addCase(addToCart.rejected, (state, action) => {
+        state.error = action.payload;
+      })
   },
 });
 

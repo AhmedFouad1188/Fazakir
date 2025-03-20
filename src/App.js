@@ -40,8 +40,8 @@ function App() {
           <Route element={<ProtectedRoute />}>
             <Route path="/profile" element={<Profile />} /> {/* ✅ Protected */}
             <Route path="/checkout" element={<Checkout />} />
-            <Route path="/admin" element={<Dashboard />} />
           </Route>
+          <Route path="/admin" element={<Dashboard />} />
           <Route path="/login" element={<Login />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/signup" element={<Signup />} />
