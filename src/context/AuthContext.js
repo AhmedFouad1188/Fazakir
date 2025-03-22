@@ -1,47 +1,79 @@
-import { createContext, useContext, useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { createContext, useContext, useEffect, useState } from "react";
 import { auth, googleProvider } from "../firebase";
-import { onAuthStateChanged, signInWithEmailAndPassword, signInWithPopup, signOut } from "firebase/auth";
-import { loginSuccess, logout } from "../redux/authSlice";
+import { 
+  onAuthStateChanged, 
+  createUserWithEmailAndPassword, 
+  signInWithEmailAndPassword, 
+  signInWithPopup, 
+  signOut 
+} from "firebase/auth";
+import axios from "axios";
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const dispatch = useDispatch();
-  const user = useSelector((state) => state.auth.user);
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        const token = await firebaseUser.getIdToken();
-        
-        // ✅ Only update Redux if user isn't already stored
-        if (!user) {
-          dispatch(loginSuccess({ user: { email: firebaseUser.email, uid: firebaseUser.uid }, token }));
+        try {
+          const token = await firebaseUser.getIdToken(); // Get Firebase token
+
+          // Send token to backend for validation & secure cookie storage
+          await axios.post("http://localhost:5000/auth/login", { token }, { withCredentials: true });
+
+          setUser(firebaseUser); // Set user in state
+        } catch (error) {
+          console.error("Authentication error:", error);
         }
       } else {
-        dispatch(logout());
+        setUser(null);
+        await axios.post("http://localhost:5000/auth/logout", {}, { withCredentials: true });
       }
     });
 
     return () => unsubscribe();
-  }, [dispatch, user]);
+  }, []);
+
+  const signup = async (email, password) => {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const token = await userCredential.user.getIdToken();
+
+    // Send token to backend for session management
+    await axios.post("http://localhost:5000/auth", { token }, { withCredentials: true });
+
+    return userCredential.user;
+  };
 
   const login = async (email, password) => {
-    return await signInWithEmailAndPassword(auth, email, password);
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const token = await userCredential.user.getIdToken();
+
+    // Send token to backend for session management
+    await axios.post("http://localhost:5000/auth/login", { token }, { withCredentials: true });
+
+    return userCredential.user;
   };
 
   const googleLogin = async () => {
-    return await signInWithPopup(auth, googleProvider);
+    const userCredential = await signInWithPopup(auth, googleProvider);
+    const token = await userCredential.user.getIdToken();
+
+    // Send token to backend for session management
+    await axios.post("http://localhost:5000/auth/login", { token }, { withCredentials: true });
+
+    return userCredential.user;
   };
 
-  const logoutUser = async () => {
-    await signOut(auth);
-    dispatch(logout());
+  const logout = async () => {
+    await signOut(auth); // Firebase sign out
+    await axios.post("http://localhost:5000/auth/logout", {}, { withCredentials: true }); // Clear backend session
+    setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, googleLogin, logout: logoutUser }}>
+    <AuthContext.Provider value={{ user, signup, login, googleLogin, logout }}>
       {children}
     </AuthContext.Provider>
   );

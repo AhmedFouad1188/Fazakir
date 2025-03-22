@@ -13,14 +13,16 @@ const storage = multer.diskStorage({
     cb(null, file.fieldname + "-" + Date.now() + path.extname(file.originalname));
   },
 });
+
+// ✅ Allow all image file types
 const fileFilter = (req, file, cb) => {
-  const allowedTypes = ["image/jpeg", "image/png", "image/gif"];
-  if (allowedTypes.includes(file.mimetype)) {
+  if (file.mimetype.startsWith("image/")) {
     cb(null, true);
   } else {
-    cb(new Error("Invalid file type. Only JPEG, PNG, and GIF allowed."), false);
+    cb(new Error("Invalid file type. Only image files are allowed."), false);
   }
 };
+
 const upload = multer({ storage, fileFilter });
 
 // ✅ Product Validation Middleware
@@ -46,9 +48,9 @@ router.post("/", upload.single("image"), validateProduct, async (req, res) => {
   try {
     const [result] = await db.execute(
       "INSERT INTO products (name, price, description, image_url, stock) VALUES (?, ?, ?, ?, ?)",
-      [name, price, description, image_url, stock || 0]
+      [name, price, description, image_url, stock]
     );
-    res.status(201).json({ id: result.insertId, name, price, description, image_url, stock: stock || 0 });
+    res.status(201).json({ id: result.insertId, name, price, description, image_url, stock });
   } catch (err) {
     console.error("Database error:", err);
     res.status(500).json({ error: "Failed to insert product" });

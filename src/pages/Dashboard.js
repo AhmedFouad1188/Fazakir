@@ -51,19 +51,23 @@ const Dashboard = () => {
     formData.append("stock", product.stock);
     if (imageFile) {
       formData.append("image", imageFile);
-    } else {
-      formData.append("image_url", product.image_url); // Keep existing image
     }
 
     try {
       if (editingProductId) {
-        await axios.put(`http://localhost:5000/products/${editingProductId}`, formData, {
-          headers: { "Content-Type": "multipart/form-data" },
+        await axios.put("http://localhost:5000/products", formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${user.token}`,
+           },
         });
         toast.success("Product updated successfully");
       } else {
         await axios.post("http://localhost:5000/products", formData, {
-          headers: { "Content-Type": "multipart/form-data" },
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${user.token}`,
+           },
         });
         toast.success("Product added successfully");
       }
@@ -132,7 +136,8 @@ const Dashboard = () => {
                 <td>${product.price}</td>
                 <td>{product.description}</td>
                 <td>{product.stock}</td>
-                <td>{product.image_url && <img src={`http://localhost:5000${product.image_url}`} alt={product.name} width="50" />}</td>
+                <td>{product.image_url && <img src={product.image_url ? `http://localhost:5000${product.image_url}` : "/default-image.png"} 
+     alt={product.name} width="50" />}</td>
                 <td>
                   <button onClick={() => handleEdit(product)}>Edit</button>
                   <button onClick={() => handleDelete(product.id)} style={{ marginLeft: "10px", color: "red" }}>
