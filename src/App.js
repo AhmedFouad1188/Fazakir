@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -31,7 +31,6 @@ function App() {
   return (
     <AuthProvider>
     <CartProvider> {/* Wrap everything with CartProvider */}
-      <Router>
         <Navbar />
         <Routes>
           <Route path="/" element={<Home />} />
@@ -47,7 +46,6 @@ function App() {
           <Route path="/signup" element={<Signup />} />
         </Routes>
         <Footer />
-      </Router>
     </CartProvider>
     </AuthProvider>
   );

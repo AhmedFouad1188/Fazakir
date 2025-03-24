@@ -1,19 +1,23 @@
 const express = require("express");
 const db = require("./db"); // 👈 Import the database connection
 const cors = require("cors");
+const cookieParser = require("cookie-parser");
 
 const app = express();
-app.use(cors());
-app.use(express.json());
 
-db.getConnection()
-  .then((connection) => {
-    console.log("Connected to MySQL database!");
-    connection.release();
-  })
-  .catch((err) => {
-    console.error("Database connection failed:", err);
-  });
+app.use(cors({
+  origin: "http://localhost:3000", // ✅ Allow only your frontend
+  credentials: true, // ✅ Allow cookies & authentication headers
+}));
+
+// ✅ Middleware to Set COOP Headers
+app.use((req, res, next) => {
+  res.setHeader("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
+  res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
+  next();
+});
+
+app.use(express.json());
 
 // Import Routes
 const productsRoutes = require("./routes/products");
@@ -24,6 +28,7 @@ app.use("/products", productsRoutes);
 app.use("/auth", authRoutes);
 app.use("/cart", cartRoutes);
 app.use("/uploads", express.static("uploads"));
+app.use(cookieParser()); // Enable cookie parsing
 
 app.listen(5000, () => {
   console.log("Server running on port 5000");

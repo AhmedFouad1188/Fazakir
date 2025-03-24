@@ -10,7 +10,7 @@ requiredEnv.forEach((envVar) => {
   }
 });
 
-// ✅ Create a connection pool
+// ✅ Create a connection pool with optimized settings
 const db = mysql.createPool({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
@@ -20,17 +20,20 @@ const db = mysql.createPool({
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
-  ssl: process.env.DB_SSL === "true" ? { rejectUnauthorized: true } : false, // Optional SSL support
+  connectTimeout: 10000, // ⏳ Prevents hanging queries
+  ssl: process.env.DB_SSL === "true" ? { rejectUnauthorized: true } : false,
 });
 
 // ✅ Test database connection at startup
 (async () => {
   try {
-    await db.getConnection(); // No need to store/release connection separately
-    console.log("✅ Database connected successfully!");
+    const connection = await db.getConnection();
+    await connection.ping(); // ✅ Ensures DB is active
+    connection.release();
+    console.log("✅ Database connected and responsive!");
   } catch (err) {
     console.error("❌ Database connection failed:", err.message);
-    process.exit(1); // Exit process if DB is not connected
+    process.exit(1);
   }
 })();
 

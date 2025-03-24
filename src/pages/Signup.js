@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
-import { auth } from "../firebase"; // Import Firebase auth instance
+import { useAuth } from "../context/AuthContext"; // ✅ Use AuthContext
 import "./signup.css";
+import axios from "axios";
 
 const countries = [
   { name: "* اختر دولتك"},
@@ -213,6 +213,7 @@ const Signup = () => {
 
   const [selectedCountry, setSelectedCountry] = useState(countries[0]);
   const [error, setError] = useState("");
+  const { signup } = useAuth(); // ✅ Get auth functions from context
   const navigate = useNavigate();
 
   // Handle form input changes
@@ -233,45 +234,28 @@ const Signup = () => {
   const handleSignup = async () => {
     try {  
       // First, create Firebase user
-      const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
+      const userCredential = await signup(formData.email, formData.password);
+  
       const user = userCredential.user;
-  
+      
       console.log("User signed up:", user);
-  
-      // Send verification email
-      await sendEmailVerification(user);
-      console.log("Verification email sent!");
-  
-      setError("A verification email has been sent. Please check your email inbox or junk folder before logging in.");
-      navigate("/");
 
       // ✅ Get Firebase ID Token
-      const idToken = await user.getIdToken();
+      const token = await user.getIdToken();
 
       //send user data (without password) to the backend
-      const response = await fetch("http://localhost:5000/auth", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${idToken}` // Send Firebase ID Token for verification
-      },
-        body: JSON.stringify({
+      await axios.post("http://localhost:5000/auth/register", {
           firstname: formData.firstname,
           lastname: formData.lastname,
           country: formData.country,
           countrycode: formData.countrycode,
           mobile: formData.mobile,
-          email: formData.email,
-      }),
-    });
-  
-      const result = await response.json(); // Expect JSON response
-  
-      if (!response.ok) {
-        throw new Error(result.message || "Signup failed. Try again.");
-      }
-  
-      console.log("Server Response:", result);
+        }, { 
+          headers: { Authorization: `Bearer ${token}` }, // ✅ Best practice
+          withCredentials: true
+        });
+
+      navigate("/");
 
     } catch (error) {
       console.error("Firebase Error:", error.code); // Log the original error for debugging
