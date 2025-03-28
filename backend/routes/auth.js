@@ -15,17 +15,17 @@ const checkUser = async (firebaseUID) => {
 };
 
 // Insert or update user, return user data
-const insertUser = async (firebaseUID, firstname, lastname, email) => {
+const insertUser = async (firebaseUID, firstname, lastname, email, isAdmin = 0) => {
   const sql = `
-    INSERT INTO users (firebase_uid, firstname, lastname, email)
-    VALUES (?, ?, ?, ?)
+    INSERT INTO users (firebase_uid, firstname, lastname, email, is_admin)
+    VALUES (?, ?, ?, ?, ?)
     ON DUPLICATE KEY UPDATE 
       firstname = VALUES(firstname), 
       lastname = VALUES(lastname), 
       email = VALUES(email);
   `;
 
-  await db.execute(sql, [firebaseUID, firstname, lastname, email]);
+  await db.execute(sql, [firebaseUID, firstname, lastname, email, isAdmin]);
 
   // ✅ Always return the user object (fetch only when necessary)
   return checkUser(firebaseUID);
@@ -36,11 +36,12 @@ const insertUser = async (firebaseUID, firstname, lastname, email) => {
  * Registers new user or updates existing user details.
  */
 router.post("/register", authenticateFirebaseToken, async (req, res) => {
-  const { firstname, lastname, country, countrycode, mobile } = req.body;
-
   try {
     const firebaseUID = req.user.uid; // Extract Firebase UID from middleware
     const email = req.user.email;
+
+    // Extract form data from request body
+    const { firstname, lastname, country, countrycode, mobile } = req.body;
 
     if (!firstname || !lastname || !country || !countrycode || !mobile) {
       return res.status(400).json({ error: "Missing required fields" });
@@ -57,16 +58,12 @@ router.post("/register", authenticateFirebaseToken, async (req, res) => {
       email = VALUES(email);
     `;
 
-    await db.execute(sql, [firebaseUID, firstname, lastname, country, countrycode + mobile, email], (err, result) => {
-      if (err) {
-        return res.status(500).json({ error: "Database error: " + err.message });
-      }
+    await db.execute(sql, [firebaseUID, firstname, lastname, country, countrycode + mobile, email]);
     
       res.json({
         message: "User registered successfully!",
         user: { firebaseUID, firstname, lastname, country, countrycode, mobile, email },
       });
-    });
 
   } catch (error) {
     res.status(500).json({ error: "Server error: " + error.message });
@@ -86,8 +83,12 @@ router.post("/login", authenticateFirebaseToken, async (req, res) => {
 
     let user = await checkUser(firebaseUID) || await insertUser(firebaseUID, firstname, lastname, email);
 
+    // ✅ Convert is_admin from 1/0 to true/false
+    user.is_admin = Boolean(user.is_admin);
+    
     const token = req.headers.authorization?.split(" ")[1];
 
+    // ✅ Store token in HttpOnly cookie
     res.cookie("authToken", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -96,7 +97,7 @@ router.post("/login", authenticateFirebaseToken, async (req, res) => {
 
     res.json({ 
       message: "Login successful!", user }); // ✅ Fallback user object
-
+      console.log(user);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -113,6 +114,23 @@ router.post("/logout", (req, res) => {
     sameSite: "Strict",
   });
   res.json({ message: "Logged out successfully!" });
+});
+
+router.get("/me", authenticateFirebaseToken, async (req, res) => {
+  try {
+    const user = await checkUser(req.user.uid);
+    if (!user) {
+      return res.status(401).json({ error: "User not found" });
+    }
+
+    // ✅ Ensure is_admin is included
+    user.is_admin = Boolean(user.is_admin);
+
+    res.json({ user });
+  } catch (error) {
+    console.error("❌ Error refreshing auth:", error);
+    res.status(500).json({ error: "Server error" });
+  }
 });
 
 module.exports = router;

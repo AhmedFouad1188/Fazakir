@@ -3,12 +3,13 @@ import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 
 const Cart = () => {
-  const cartItems = useSelector((state) => state.cart);
+  const cart = useSelector((state) => state.cart); // ✅ Get full cart state
+  const totalQuantity = cart?.totalQuantity || 0; // ✅ Safe access
 
   return (
     <div style={{ position: "relative", padding: "10px" }}>
-      <Link to="/cart" style={{ textDecoration: "none", color: "black" }}>
-        🛒 Cart ({cartItems.length})
+      <Link to="/cart" style={{ textDecoration: "none", color: "white", fontWeight: "bold" }}>
+        🛒 Cart ({totalQuantity}) {/* ✅ Display cart count safely */}
       </Link>
     </div>
   );

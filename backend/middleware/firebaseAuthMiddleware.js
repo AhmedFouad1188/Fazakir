@@ -41,6 +41,7 @@ const authenticateFirebaseToken = async (req, res, next) => {
     const decodedToken = await admin.auth().verifyIdToken(token);
 
     req.user = decodedToken; // Attach decoded user info to request
+    
     next(); // Proceed to the next middleware
   } catch (error) {
     return res.status(403).json({ error: "Invalid or expired token" });

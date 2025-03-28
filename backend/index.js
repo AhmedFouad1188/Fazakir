@@ -18,6 +18,7 @@ app.use((req, res, next) => {
 });
 
 app.use(express.json());
+app.use(cookieParser()); // Parse cookies
 
 // Import Routes
 const productsRoutes = require("./routes/products");
@@ -28,7 +29,6 @@ app.use("/products", productsRoutes);
 app.use("/auth", authRoutes);
 app.use("/cart", cartRoutes);
 app.use("/uploads", express.static("uploads"));
-app.use(cookieParser()); // Enable cookie parsing
 
 app.listen(5000, () => {
   console.log("Server running on port 5000");

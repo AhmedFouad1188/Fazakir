@@ -1,15 +1,15 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
-import { useAuth } from "../context/AuthContext";
+import { useSelector, useDispatch } from "react-redux";
+import { logout } from "../redux/authSlice";
 import Cart from "../components/Cart"; // ✅ Import Cart component
 
 const Navbar = () => {
-  const { user, logout } = useAuth();
+  const user = useSelector((state) => state.auth.user);
+  const dispatch = useDispatch();
   const navigate = useNavigate();
-  const totalItems = useSelector((state) => state.cart.totalQuantity); // Get total quantity from Redux
-  
+
   const handleLogout = async () => {
-    await logout();
+    dispatch(logout());
     navigate("/login"); // ✅ Redirect to login page after logout
   };
 
@@ -36,7 +36,7 @@ const Navbar = () => {
 
         {user ? (
           <>
-            <Link to="/profile">Profile</Link>
+            <Link to="/profile" style={{ color: "#fff", textDecoration: "none" }}>Profile</Link>
             <button 
               onClick={handleLogout} 
               style={{ 

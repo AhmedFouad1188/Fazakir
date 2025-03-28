@@ -1,21 +1,18 @@
 import { useEffect, useState } from "react";
-import { useAuth } from "../context/AuthContext"; // ✅ Use Firebase Auth Context
 import { useSelector } from "react-redux";
 
 const Profile = () => {
-  const { user } = useAuth();  // ✅ Firebase User
-  const reduxUser = useSelector((state) => state.auth.user); // ✅ Redux User
+  const user = useSelector((state) => state.auth.user);
   const [profile, setProfile] = useState(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (!reduxUser && !user) {
+    if (!user) {
       setError("You are not logged in!");
       return;
     }
-
-    setProfile(reduxUser || user); // ✅ Use Redux first, then Firebase user
-  }, [reduxUser, user]);
+    setProfile(user);
+  }, [user]);
 
   if (error) return <p style={{ color: "red" }}>{error}</p>;
 

@@ -61,11 +61,50 @@ router.post("/", upload.single("image"), validateProduct, async (req, res) => {
 router.get("/", async (req, res) => {
   try {
     const [rows] = await db.execute("SELECT * FROM products");
-    if (!rows.length) return res.status(404).json({ message: "No products found" });
     res.json(rows);
   } catch (err) {
     console.error("Database error:", err);
     res.status(500).json({ error: "Database connection failed" });
+  }
+});
+
+// ✅ Update Product (PUT)
+router.put("/:id", upload.single("image"), validateProduct, async (req, res) => {
+  const { id } = req.params;
+  const { name, price, description, stock } = req.body;
+  const image_url = req.file ? `/uploads/${req.file.filename}` : null; // Only update if a new image is uploaded
+
+  try {
+    // Check if the product exists
+    const [existingProduct] = await db.execute("SELECT * FROM products WHERE id = ?", [id]);
+    if (existingProduct.length === 0) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+
+    // Build update query dynamically
+    const updateFields = [];
+    const values = [];
+
+    if (name) { updateFields.push("name = ?"); values.push(name); }
+    if (price) { updateFields.push("price = ?"); values.push(price); }
+    if (description) { updateFields.push("description = ?"); values.push(description); }
+    if (stock) { updateFields.push("stock = ?"); values.push(stock); }
+    if (image_url) { updateFields.push("image_url = ?"); values.push(image_url); }
+
+    if (updateFields.length === 0) {
+      return res.status(400).json({ error: "No fields to update" });
+    }
+
+    values.push(id); // Add ID at the end for the WHERE clause
+
+    // Execute update query
+    const query = `UPDATE products SET ${updateFields.join(", ")} WHERE id = ?`;
+    await db.execute(query, values);
+
+    res.json({ message: "Product updated successfully" });
+  } catch (err) {
+    console.error("Database error:", err);
+    res.status(500).json({ error: "Failed to update product" });
   }
 });
 

@@ -1,7 +1,7 @@
 import { Routes, Route } from "react-router-dom";
-import { AuthProvider } from "./context/AuthContext";
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { checkAuthState } from "./redux/authSlice";
 import { fetchCart } from "./redux/cartSlice";
 import Home from "./pages/Home";
 import Shop from "./pages/Shop";
@@ -15,39 +15,53 @@ import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import Dashboard from "./pages/Dashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
-import { CartProvider } from "./context/CartContext"; // Import CartProvider
-import "./styles.css"
+import { CartProvider } from "./context/CartContext";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import "./styles.css";
 
 function App() {
   const dispatch = useDispatch();
-  const user = useSelector((state) => state.user?.user); // Get user from Redux
-  
+  const user = useSelector((state) => state.auth.user); 
+
+  // ✅ Ensure authentication persists after page refresh
+  useEffect(() => {
+    dispatch(checkAuthState()); 
+  }, [dispatch]);
+
+  // ✅ Fetch cart after authentication
   useEffect(() => {
     if (user) {
-      dispatch(fetchCart(user.id));
+      dispatch(fetchCart(user.uid)); 
     }
   }, [user, dispatch]);
-  
+
   return (
-    <AuthProvider>
     <CartProvider> {/* Wrap everything with CartProvider */}
-        <Navbar />
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/shop" element={<Shop />} />
-          <Route path="/cart" element={<CartPage />} />
-          <Route element={<ProtectedRoute />}>
-            <Route path="/profile" element={<Profile />} /> {/* ✅ Protected */}
-            <Route path="/checkout" element={<Checkout />} />
-          </Route>
+      <ToastContainer />
+      <Navbar />
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/shop" element={<Shop />} />
+        <Route path="/cart" element={<CartPage />} />
+        
+        {/* ✅ Protected Routes */}
+        <Route element={<ProtectedRoute />}>
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/checkout" element={<Checkout />} />
+        </Route>
+
+        {/* ✅ Admin Dashboard (Protected) */}
+        <Route element={<ProtectedRoute isAdmin={true} />}>
           <Route path="/admin" element={<Dashboard />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/signup" element={<Signup />} />
-        </Routes>
-        <Footer />
+        </Route>
+
+        <Route path="/login" element={<Login />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/signup" element={<Signup />} />
+      </Routes>
+      <Footer />
     </CartProvider>
-    </AuthProvider>
   );
 }
 

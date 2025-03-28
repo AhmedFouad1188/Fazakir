@@ -1,18 +1,18 @@
 import React from "react";
-import ReactDOM from "react-dom/client"; // ✅ Import from "react-dom/client"
+import ReactDOM from "react-dom/client";
 import { Provider } from "react-redux";
 import { BrowserRouter } from "react-router-dom";
-import store from "./redux/store"; // ✅ Correct store import
+import store from "./redux/store";
 import App from "./App";
-import { AuthProvider } from "./context/AuthContext"; // ✅ Import AuthProvider
+import axios from "axios";
 
-const root = ReactDOM.createRoot(document.getElementById("root")); // ✅ Use createRoot()
+axios.defaults.withCredentials = true; // Ensure cookies are sent with requests
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <BrowserRouter>
     <Provider store={store}>
-      <AuthProvider>
         <App />
-      </AuthProvider>
     </Provider>
   </BrowserRouter>
 );

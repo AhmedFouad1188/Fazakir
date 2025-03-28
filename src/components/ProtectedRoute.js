@@ -1,14 +1,19 @@
 import { Navigate, Outlet } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
 import { useSelector } from "react-redux";
 
-const ProtectedRoute = () => {
-  const { user } = useAuth();
-  const reduxUser = useSelector((state) => state.auth.user);
+const ProtectedRoute = ({ isAdmin = false }) => {
+  const user = useSelector((state) => state.auth.user);
+  const isLoading = useSelector((state) => state.auth.isLoading);
 
-  if (reduxUser === undefined && user === undefined) return <p>Loading...</p>; // ✅ Wait before redirecting
+  if (isLoading) return <p>Loading...</p>;
 
-  return reduxUser || user ? <Outlet /> : <Navigate to="/login" replace />;
+  // Redirect to login if no user is found
+  if (!user) return <Navigate to="/login" />;
+
+  // If `isAdmin` is required and the user is not an admin, redirect to home
+  if (isAdmin && !user.is_admin) return <Navigate to="/" />;
+
+  return <Outlet />;
 };
 
 export default ProtectedRoute;
