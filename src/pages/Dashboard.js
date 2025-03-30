@@ -47,9 +47,7 @@ const Dashboard = () => {
   const fetchProducts = async () => {
     setLoadingProducts(true); // Show loading state
     try {
-      const response = await axios.get("http://localhost:5000/products", {
-        withCredentials: true,
-      });
+      const response = await axios.get("http://localhost:5000/products", { withCredentials: true });
 
       if (response.data.length === 0) {
         console.log("No products available.");
@@ -135,9 +133,7 @@ const Dashboard = () => {
     if (!window.confirm("Are you sure you want to delete this product?")) return;
 
     try {
-      await axios.delete(`http://localhost:5000/products/${id}`, {
-        withCredentials: true,
-      });
+      await axios.delete(`http://localhost:5000/products/${id}`, { withCredentials: true });
       toast.success("Product deleted successfully");
       fetchProducts();
     } catch (error) {

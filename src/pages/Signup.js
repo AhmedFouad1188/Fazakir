@@ -236,21 +236,22 @@ const Signup = () => {
       await dispatch(signup(formData)).unwrap();
       navigate("/");
     } catch (error) {
-      console.error("Signup Error:", error); // ✅ Always log the full error
-  
-      let errorMessage = "An unknown error occurred. Please try again.";
-  
-      if (error.code === "auth/email-already-in-use") {
-        errorMessage = "This email is already registered. Try logging in.";
-      } else if (error.code === "auth/password-does-not-meet-requirements") { 
-        errorMessage = "Password must be 10-20 characters long and contain at least one uppercase letter, one lowercase letter, and one numeric character.";
-      } else if (error.message) {
-        errorMessage = error.message; // ✅ Use backend/Firebase default error message
-      }
-      
-      setError(errorMessage);
+      console.error("Firebase Error:", error.code); // Log the original error for debugging
+
+    // ✅ Custom error messages
+    let errorMessage = "An unknown error occurred. Please try again.";
+
+    if (error.code === "auth/email-already-in-use") {
+      errorMessage = "This email is already registered. Try logging in.";
+    } else if (error.code && error.code.includes("password")) {
+      errorMessage = "Password length must be 10 - 20 characters and contains at least one uppercase, one lowercase and one numeric character.";
+    } else {
+      errorMessage = error.message; // Use Firebase default if we don't handle it
     }
-  };
+
+    setError(errorMessage);
+    };
+  }
 
   return (
     <div className="signupcont">

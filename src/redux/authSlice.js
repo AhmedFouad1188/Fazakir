@@ -1,9 +1,12 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { 
   createUserWithEmailAndPassword, 
+  sendEmailVerification, 
   signInWithEmailAndPassword, 
   signInWithPopup, 
-  signOut
+  signOut,
+  onIdTokenChanged,
+  getIdToken
 } from "firebase/auth";
 import axios from "axios";
 import { auth, googleProvider } from "../firebase";
@@ -19,51 +22,61 @@ export const signup = createAsyncThunk("auth/signup", async (formData, { rejectW
     const { email, password, ...additionalData } = formData; // Extract email & password
 
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    await sendEmailVerification(userCredential.user);
+
     const token = await userCredential.user.getIdToken();
 
-    const response = await axios.post("http://localhost:5000/auth/register", 
-      { ...additionalData },  // ✅ Send all form data
-      {
-        headers: { Authorization: `Bearer ${token}` },
-        withCredentials: true,
-      }
+    const response = await axios.post("http://localhost:5000/auth/register", { ...additionalData },  // ✅ Send all form data
+      { headers: { Authorization: `Bearer ${token}` },
+        withCredentials: true }
     );
 
     return response.data.user;
   } catch (error) {
-    return rejectWithValue(error.response?.data?.message || error.message);
-  }
+    return rejectWithValue({ code: error.code, message: error.message });
+  }  
 });
 
 export const login = createAsyncThunk("auth/login", async ({ email, password }, { rejectWithValue }) => {
-  try {
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    const token = await userCredential.user.getIdToken();
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
 
-    const response = await axios.post("http://localhost:5000/auth/login", {}, {
-      headers: { Authorization: `Bearer ${token}` },
-      withCredentials: true,
-    });
+      // ❌ Reject login if email is not verified
+      if (!user.emailVerified) {
+        await signOut(auth); // ✅ Immediately sign out the user
+        throw new Error("Your email is not verified. Please check your inbox or junk folder.");
+      }
 
-    return response.data.user;
-  } catch (error) {
-    return rejectWithValue(error.response?.data?.message || error.message);
-  }
-});
+      const token = await user.getIdToken();
+
+      const response = await axios.post("http://localhost:5000/auth/login", {}, 
+        { headers: { Authorization: `Bearer ${token}` },
+          withCredentials: true }
+        );
+
+      return response.data.user;
+    } catch (error) {
+      return rejectWithValue({
+        message: error.response?.data?.message || error.message,
+        code: error.code || "unknown_error",
+      });
+    }
+  });
 
 export const googleLogin = createAsyncThunk("auth/googleLogin", async (_, { rejectWithValue }) => {
   try {
     const userCredential = await signInWithPopup(auth, googleProvider);
     const token = await userCredential.user.getIdToken();
 
-    const response = await axios.post("http://localhost:5000/auth/login", {}, {
-      headers: { Authorization: `Bearer ${token}` },
-      withCredentials: true,
-    });
+    const response = await axios.post("http://localhost:5000/auth/login", {}, 
+      { headers: { Authorization: `Bearer ${token}` },
+        withCredentials: true }
+      );
 
     return response.data.user;
   } catch (error) {
-    return rejectWithValue(error.response?.data?.message || error.message);
+    return rejectWithValue({ code: error.code, message: error.message });
   }
 });
 
@@ -73,23 +86,32 @@ export const logout = createAsyncThunk("auth/logout", async (_, { rejectWithValu
     await axios.post("http://localhost:5000/auth/logout", {}, { withCredentials: true });
     return null;
   } catch (error) {
-    return rejectWithValue(error.response?.data?.message || error.message);
+    return rejectWithValue({ code: error.code, message: error.message });
   }
 });
 
-export const checkAuthState = createAsyncThunk(
-  "auth/checkAuth",
-  async (_, { rejectWithValue }) => {
+export const checkAuthState = createAsyncThunk("auth/checkAuth", async (_, { rejectWithValue }) => {
     try {
-      const response = await axios.get("http://localhost:5000/auth/me", {
-        withCredentials: true,
-      });
+      const response = await axios.get("http://localhost:5000/auth/me", { withCredentials: true });
       return response.data.user; // Ensure backend returns user data, including `is_admin`
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Failed to check authentication");
     }
   }
 );
+
+// Monitor Firebase token changes
+onIdTokenChanged(auth, async (user) => {
+  if (user) {
+    const newToken = await user.getIdToken(); // Get new refreshed token
+
+    // Send refreshed token to backend to update session cookie
+    await axios.post("http://localhost:5000/auth/refresh-token", {}, {
+      headers: { Authorization: `Bearer ${newToken}` },
+      withCredentials: true, // Ensures cookie is stored
+    });
+  }
+});
 
 const authSlice = createSlice({
   name: "auth",

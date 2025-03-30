@@ -2,6 +2,10 @@ const express = require("express");
 const { authenticateFirebaseToken } = require("../middleware/firebaseAuthMiddleware");
 const db = require("../db"); // Import MySQL connection
 const router = express.Router();
+const normalizeUser = require("../middleware/normalizeUser");
+const admin = require("firebase-admin");
+
+router.use(normalizeUser);
 
 // Check if user exists
 const checkUser = async (firebaseUID) => {
@@ -15,17 +19,17 @@ const checkUser = async (firebaseUID) => {
 };
 
 // Insert or update user, return user data
-const insertUser = async (firebaseUID, firstname, lastname, email, isAdmin = 0) => {
+const insertUser = async (firebaseUID, firstname, lastname, email) => {
   const sql = `
-    INSERT INTO users (firebase_uid, firstname, lastname, email, is_admin)
-    VALUES (?, ?, ?, ?, ?)
+    INSERT INTO users (firebase_uid, firstname, lastname, email)
+    VALUES (?, ?, ?, ?)
     ON DUPLICATE KEY UPDATE 
       firstname = VALUES(firstname), 
       lastname = VALUES(lastname), 
       email = VALUES(email);
   `;
 
-  await db.execute(sql, [firebaseUID, firstname, lastname, email, isAdmin]);
+  await db.execute(sql, [firebaseUID, firstname, lastname, email]);
 
   // ✅ Always return the user object (fetch only when necessary)
   return checkUser(firebaseUID);
@@ -82,22 +86,18 @@ router.post("/login", authenticateFirebaseToken, async (req, res) => {
     const lastname = req.user.family_name || req.user.name?.split(" ")[1] || "Unknown";
 
     let user = await checkUser(firebaseUID) || await insertUser(firebaseUID, firstname, lastname, email);
-
-    // ✅ Convert is_admin from 1/0 to true/false
-    user.is_admin = Boolean(user.is_admin);
     
     const token = req.headers.authorization?.split(" ")[1];
 
     // ✅ Store token in HttpOnly cookie
     res.cookie("authToken", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "Strict",
+      secure: process.env.NODE_ENV === "production", // Secure only in production
+      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax", // "None" for cross-origin, "Lax" for localhost
     });
 
     res.json({ 
       message: "Login successful!", user }); // ✅ Fallback user object
-      console.log(user);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -110,8 +110,8 @@ router.post("/login", authenticateFirebaseToken, async (req, res) => {
 router.post("/logout", (req, res) => {
   res.clearCookie("authToken", {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "Strict",
+    secure: process.env.NODE_ENV === "production", // Secure only in production
+    sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax", // "None" for cross-origin, "Lax" for localhost
   });
   res.json({ message: "Logged out successfully!" });
 });
@@ -123,13 +123,36 @@ router.get("/me", authenticateFirebaseToken, async (req, res) => {
       return res.status(401).json({ error: "User not found" });
     }
 
-    // ✅ Ensure is_admin is included
-    user.is_admin = Boolean(user.is_admin);
-
     res.json({ user });
   } catch (error) {
     console.error("❌ Error refreshing auth:", error);
     res.status(500).json({ error: "Server error" });
+  }
+});
+
+// ✅ Refresh Token Route - Generate a New Token and Store it in Cookie
+router.post("/refresh-token", async (req, res) => {
+  try {
+    const oldToken = req.cookies?.authToken; // Get old token from cookie
+
+    if (!oldToken) {
+      return res.status(401).json({ error: "Unauthorized: No token provided" });
+    }
+
+    // Verify old token
+    const decodedToken = await admin.auth().verifyIdToken(oldToken, true);
+    const newToken = await admin.auth().createCustomToken(decodedToken.uid); // Generate new token
+
+    // Store new token in HTTP-only cookie
+    res.cookie("authToken", newToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production", // Secure only in production
+      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax", // "None" for cross-origin, "Lax" for localhost
+    });
+
+    res.json({ message: "Token refreshed", newToken });
+  } catch (error) {
+    return res.status(403).json({ error: "Invalid or expired token" });
   }
 });
 

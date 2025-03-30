@@ -17,38 +17,49 @@ const Login = () => {
     setError("");
     try {
       await dispatch(login({ email, password })).unwrap();
+
       navigate("/");
+
     } catch (error) {
-      console.error("🔥 Firebase Error:", error.code);
+      console.error("Login Error:", error); // Log for debugging
 
-      // ✅ Custom error messages
-      let errorMessage = "An unknown error occurred. Please try again.";
-
-      switch (error.code) {
-        case "auth/invalid-credential":
-          errorMessage = "Incorrect Email or Password.";
-          break;
-        case "auth/user-not-found":
-          errorMessage = "No account found with this email.";
-          break;
-        case "auth/wrong-password":
-          errorMessage = "Incorrect password.";
-          break;
-        default:
-          errorMessage = "Something went wrong. Please try again later.";
-      }
-
-      setError(errorMessage);
+    let errorMessage = error?.message || "Login failed. Please try again.";
+    
+    if (error?.code === "auth/invalid-credential") {
+      errorMessage = "Incorrect Email or Password.";
+    } else if (error?.code === "auth/user-not-found") {
+      errorMessage = "No account found with this email. Please Sign Up.";
+    } else if (error?.code === "auth/wrong-password") {
+      errorMessage = "Incorrect password.";
+    } else if (error?.message.includes("not verified")) {
+      errorMessage = "Your email is not verified. Please click on the verification link in your inbox or junk folder.";
     }
-  };
+
+    setError(errorMessage);
+  }
+};
 
   const handleGoogleLogin = async () => {
     setError("");
     try {
       await dispatch(googleLogin ()).unwrap();
       navigate("/");
-    } catch (err) {
-      setError("Google login failed. Please try again.");
+    } catch (error) {
+      console.error("Google Login Error:", error); // Log full error for debugging
+  
+      let errorMessage = "Google login failed. Please try again.";
+  
+      if (typeof error === "string") {
+        errorMessage = error;
+      } else if (error?.code === "auth/popup-closed-by-user") {
+        errorMessage = "Google sign-in was closed before completing. Please try again.";
+      } else if (error?.code === "auth/network-request-failed") {
+        errorMessage = "Network error. Please check your internet connection.";
+      } else if (error?.message) {
+        errorMessage = error.message; // Default error message from Firebase
+      }
+  
+      setError(errorMessage);
     }
   };
 

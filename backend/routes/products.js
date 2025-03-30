@@ -3,6 +3,8 @@ const db = require("../db"); // Database connection
 const multer = require("multer");
 const path = require("path");
 const { body, validationResult } = require("express-validator");
+const { authenticateFirebaseToken } = require("../middleware/firebaseAuthMiddleware");
+const adminOnly = require("../middleware/authenticateAdmin");
 
 const router = express.Router();
 
@@ -41,7 +43,7 @@ const validateProduct = [
 ];
 
 // ✅ Create Product (POST)
-router.post("/", upload.single("image"), validateProduct, async (req, res) => {
+router.post("/", authenticateFirebaseToken, adminOnly, upload.single("image"), validateProduct, async (req, res) => {
   const { name, price, description, stock } = req.body;
   const image_url = req.file ? `/uploads/${req.file.filename}` : "/uploads/default.png";
 
@@ -69,7 +71,7 @@ router.get("/", async (req, res) => {
 });
 
 // ✅ Update Product (PUT)
-router.put("/:id", upload.single("image"), validateProduct, async (req, res) => {
+router.put("/:id", authenticateFirebaseToken, adminOnly, upload.single("image"), validateProduct, async (req, res) => {
   const { id } = req.params;
   const { name, price, description, stock } = req.body;
   const image_url = req.file ? `/uploads/${req.file.filename}` : null; // Only update if a new image is uploaded
@@ -109,7 +111,7 @@ router.put("/:id", upload.single("image"), validateProduct, async (req, res) => 
 });
 
 // ✅ Delete Product (DELETE)
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", authenticateFirebaseToken, adminOnly, async (req, res) => {
   try {
     const [result] = await db.execute("DELETE FROM products WHERE id = ?", [req.params.id]);
     if (result.affectedRows === 0) return res.status(404).json({ message: "Product not found" });
