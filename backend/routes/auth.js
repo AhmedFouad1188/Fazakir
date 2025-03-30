@@ -86,15 +86,6 @@ router.post("/login", authenticateFirebaseToken, async (req, res) => {
     const lastname = req.user.family_name || req.user.name?.split(" ")[1] || "Unknown";
 
     let user = await checkUser(firebaseUID) || await insertUser(firebaseUID, firstname, lastname, email);
-    
-    const token = req.headers.authorization?.split(" ")[1];
-
-    // ✅ Store token in HttpOnly cookie
-    res.cookie("authToken", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production", // Secure only in production
-      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax", // "None" for cross-origin, "Lax" for localhost
-    });
 
     res.json({ 
       message: "Login successful!", user }); // ✅ Fallback user object
@@ -133,25 +124,23 @@ router.get("/me", authenticateFirebaseToken, async (req, res) => {
 // ✅ Refresh Token Route - Generate a New Token and Store it in Cookie
 router.post("/refresh-token", async (req, res) => {
   try {
-    const oldToken = req.cookies?.authToken; // Get old token from cookie
+    const newFirebaseToken = req.header("Authorization")?.split(" ")[1];
 
-    if (!oldToken) {
+    if (!newFirebaseToken) {
       return res.status(401).json({ error: "Unauthorized: No token provided" });
     }
 
-    // Verify old token
-    const decodedToken = await admin.auth().verifyIdToken(oldToken, true);
-    const newToken = await admin.auth().createCustomToken(decodedToken.uid); // Generate new token
+    const decodedToken = await admin.auth().verifyIdToken(newFirebaseToken);
 
-    // Store new token in HTTP-only cookie
-    res.cookie("authToken", newToken, {
+    res.cookie("authToken", newFirebaseToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production", // Secure only in production
-      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax", // "None" for cross-origin, "Lax" for localhost
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
     });
 
-    res.json({ message: "Token refreshed", newToken });
+    res.json({ message: "Token refreshed", newToken: newFirebaseToken });
   } catch (error) {
+    console.error("Token refresh failed:", error);
     return res.status(403).json({ error: "Invalid or expired token" });
   }
 });

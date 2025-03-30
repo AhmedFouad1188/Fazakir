@@ -5,8 +5,7 @@ import {
   signInWithEmailAndPassword, 
   signInWithPopup, 
   signOut,
-  onIdTokenChanged,
-  getIdToken
+  onIdTokenChanged
 } from "firebase/auth";
 import axios from "axios";
 import { auth, googleProvider } from "../firebase";
@@ -102,14 +101,21 @@ export const checkAuthState = createAsyncThunk("auth/checkAuth", async (_, { rej
 
 // Monitor Firebase token changes
 onIdTokenChanged(auth, async (user) => {
-  if (user) {
-    const newToken = await user.getIdToken(); // Get new refreshed token
+  if (!user) {
+    console.log("❌ No user logged in. Skipping token refresh.");
+    return;
+  }
+
+  try {
+    const newFirebaseToken = await user.getIdToken(); // Get new refreshed token
 
     // Send refreshed token to backend to update session cookie
     await axios.post("http://localhost:5000/auth/refresh-token", {}, {
-      headers: { Authorization: `Bearer ${newToken}` },
+      headers: { Authorization: `Bearer ${newFirebaseToken}` },
       withCredentials: true, // Ensures cookie is stored
     });
+  } catch (error) {
+    console.error("❌ Error refreshing token:", error);
   }
 });
 
