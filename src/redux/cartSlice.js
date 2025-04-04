@@ -7,9 +7,10 @@ export const fetchCart = createAsyncThunk("cart/fetchCart", async (_, { getState
     const user = getState().auth.user;
     if (!user?.token) return rejectWithValue("User not authenticated");
 
-    const response = await axios.get("http://localhost:5000/cart", {
-      headers: { Authorization: `Bearer ${user.token}` },
-    });
+    const response = await axios.get("http://localhost:5000/api/cart", 
+      { headers: { Authorization: `Bearer ${token}` },
+      withCredentials: true }
+    );
 
     return response.data; // Backend should return cart items
   } catch (error) {
@@ -25,10 +26,9 @@ export const addToCart = createAsyncThunk(
       const user = getState().auth.user;
       if (!user?.token) return rejectWithValue("User not authenticated");
 
-      const response = await axios.post(
-        "http://localhost:5000/cart",
-        { userId, productId, quantity },
-        { headers: { Authorization: `Bearer ${user.token}` } }
+      const response = await axios.post("http://localhost:5000/api/cart", { userId, productId, quantity },
+        { headers: { Authorization: `Bearer ${token}` },
+        withCredentials: true }
       );
 
       return response.data; // Return the updated cart item
@@ -44,9 +44,10 @@ export const removeFromCart = createAsyncThunk("cart/removeFromCart", async (id,
     const user = getState().auth.user;
     if (!user?.token) return rejectWithValue("User not authenticated");
 
-    await axios.delete(`http://localhost:5000/cart/${id}`, {
-      headers: { Authorization: `Bearer ${user.token}` },
-    });
+    await axios.delete(`http://localhost:5000/api/cart/${id}`, 
+      { headers: { Authorization: `Bearer ${token}` },
+      withCredentials: true }
+    );
 
     return id; // Return removed item ID to update Redux store
   } catch (error) {
@@ -60,9 +61,10 @@ export const clearCart = createAsyncThunk("cart/clearCart", async (_, { getState
     const user = getState().auth.user;
     if (!user?.token) return rejectWithValue("User not authenticated");
 
-    await axios.delete("http://localhost:5000/cart/clear", {
-      headers: { Authorization: `Bearer ${user.token}` },
-    });
+    await axios.delete("http://localhost:5000/api/cart/clear", 
+      { headers: { Authorization: `Bearer ${token}` },
+      withCredentials: true }
+    );
 
     return []; // Return empty array to reset cart
   } catch (error) {

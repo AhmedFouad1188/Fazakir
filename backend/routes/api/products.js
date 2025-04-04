@@ -1,10 +1,10 @@
 const express = require("express");
-const db = require("../db"); // Database connection
+const db = require("../../db"); // Database connection
 const multer = require("multer");
 const path = require("path");
 const { body, validationResult } = require("express-validator");
-const { authenticateFirebaseToken } = require("../middleware/firebaseAuthMiddleware");
-const adminOnly = require("../middleware/authenticateAdmin");
+const { authenticateFirebaseToken } = require("../../middleware/firebaseAuthMiddleware");
+const adminOnly = require("../../middleware/authenticateAdmin");
 
 const router = express.Router();
 
@@ -43,7 +43,7 @@ const validateProduct = [
 ];
 
 // ✅ Create Product (POST)
-router.post("/", authenticateFirebaseToken, adminOnly, upload.single("image"), validateProduct, async (req, res) => {
+router.post("/add", authenticateFirebaseToken, adminOnly, upload.single("image"), validateProduct, async (req, res) => {
   const { name, price, description, stock } = req.body;
   const image_url = req.file ? `/uploads/${req.file.filename}` : "/uploads/default.png";
 

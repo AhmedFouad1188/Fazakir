@@ -1,9 +1,9 @@
 const express = require("express");
-const { authenticateFirebaseToken } = require("../middleware/firebaseAuthMiddleware");
-const db = require("../db"); // Import MySQL connection
+const { authenticateFirebaseToken, admin } = require("../../middleware/firebaseAuthMiddleware");
+const db = require("../../db"); // Import MySQL connection
 const router = express.Router();
-const normalizeUser = require("../middleware/normalizeUser");
-const admin = require("firebase-admin");
+const normalizeUser = require("../../middleware/normalizeUser");
+const sendVerificationEmail = require("../../utils/sendVerificationEmail");
 
 router.use(normalizeUser);
 
@@ -71,6 +71,19 @@ router.post("/register", authenticateFirebaseToken, async (req, res) => {
 
   } catch (error) {
     res.status(500).json({ error: "Server error: " + error.message });
+  }
+});
+
+router.post("/send-verification-email", authenticateFirebaseToken, async (req, res) => {
+  const firebaseUID = req.user.uid;
+  const email = req.user.email;
+
+  try {
+    await sendVerificationEmail(email, firebaseUID); // Send email verification
+    res.status(200).json({ message: "Verification email sent" });
+  } catch (error) {
+    console.error("Error sending verification email:", error);
+    res.status(500).json({ message: "Failed to send verification email" });
   }
 });
 

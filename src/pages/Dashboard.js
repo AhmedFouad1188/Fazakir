@@ -47,7 +47,7 @@ const Dashboard = () => {
   const fetchProducts = async () => {
     setLoadingProducts(true); // Show loading state
     try {
-      const response = await axios.get("http://localhost:5000/products", { withCredentials: true });
+      const response = await axios.get("http://localhost:5000/api/products", { withCredentials: true });
 
       if (response.data.length === 0) {
         console.log("No products available.");
@@ -90,13 +90,13 @@ const Dashboard = () => {
 
     try {
       if (editingProductId) {
-        await axios.put(`http://localhost:5000/products/${editingProductId}`, formData, {
+        await axios.put(`http://localhost:5000/api/products/${editingProductId}`, formData, {
           headers: { "Content-Type": "multipart/form-data" },
           withCredentials: true,
         });
         toast.success("Product updated successfully");
       } else {
-        await axios.post("http://localhost:5000/products", formData, {
+        await axios.post("http://localhost:5000/api/products/add", formData, {
           headers: { "Content-Type": "multipart/form-data" },
           withCredentials: true,
         });
@@ -133,7 +133,7 @@ const Dashboard = () => {
     if (!window.confirm("Are you sure you want to delete this product?")) return;
 
     try {
-      await axios.delete(`http://localhost:5000/products/${id}`, { withCredentials: true });
+      await axios.delete(`http://localhost:5000/api/products/${id}`, { withCredentials: true });
       toast.success("Product deleted successfully");
       fetchProducts();
     } catch (error) {

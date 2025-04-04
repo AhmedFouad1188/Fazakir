@@ -1,7 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { 
   createUserWithEmailAndPassword, 
-  sendEmailVerification, 
   signInWithEmailAndPassword, 
   signInWithPopup, 
   signOut,
@@ -21,14 +20,23 @@ export const signup = createAsyncThunk("auth/signup", async (formData, { rejectW
     const { email, password, ...additionalData } = formData; // Extract email & password
 
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    await sendEmailVerification(userCredential.user);
 
     const token = await userCredential.user.getIdToken();
 
-    const response = await axios.post("http://localhost:5000/auth/register", { ...additionalData },  // ✅ Send all form data
+    const response = await axios.post("http://localhost:5000/api/auth/register", { ...additionalData },  // ✅ Send all form data
       { headers: { Authorization: `Bearer ${token}` },
         withCredentials: true }
     );
+
+    // Send email verification request to the backend
+    const response2 = await axios.post("http://localhost:5000/api/auth/send-verification-email", {},
+      { headers: { Authorization: `Bearer ${token}` },
+        withCredentials: true }
+    );
+
+    if (response2.status === 200) {
+      console.log("Verification email sent successfully.");
+    };
 
     return response.data.user;
   } catch (error) {
@@ -49,7 +57,7 @@ export const login = createAsyncThunk("auth/login", async ({ email, password }, 
 
       const token = await user.getIdToken();
 
-      const response = await axios.post("http://localhost:5000/auth/login", {}, 
+      const response = await axios.post("http://localhost:5000/api/auth/login", {}, 
         { headers: { Authorization: `Bearer ${token}` },
           withCredentials: true }
         );
@@ -68,7 +76,7 @@ export const googleLogin = createAsyncThunk("auth/googleLogin", async (_, { reje
     const userCredential = await signInWithPopup(auth, googleProvider);
     const token = await userCredential.user.getIdToken();
 
-    const response = await axios.post("http://localhost:5000/auth/login", {}, 
+    const response = await axios.post("http://localhost:5000/api/auth/login", {}, 
       { headers: { Authorization: `Bearer ${token}` },
         withCredentials: true }
       );
@@ -82,7 +90,7 @@ export const googleLogin = createAsyncThunk("auth/googleLogin", async (_, { reje
 export const logout = createAsyncThunk("auth/logout", async (_, { rejectWithValue }) => {
   try {
     await signOut(auth);
-    await axios.post("http://localhost:5000/auth/logout", {}, { withCredentials: true });
+    await axios.post("http://localhost:5000/api/auth/logout", {}, { withCredentials: true });
     return null;
   } catch (error) {
     return rejectWithValue({ code: error.code, message: error.message });
@@ -91,7 +99,7 @@ export const logout = createAsyncThunk("auth/logout", async (_, { rejectWithValu
 
 export const checkAuthState = createAsyncThunk("auth/checkAuth", async (_, { rejectWithValue }) => {
     try {
-      const response = await axios.get("http://localhost:5000/auth/me", { withCredentials: true });
+      const response = await axios.get("http://localhost:5000/api/auth/me", { withCredentials: true });
       return response.data.user; // Ensure backend returns user data, including `is_admin`
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Failed to check authentication");
@@ -110,7 +118,7 @@ onIdTokenChanged(auth, async (user) => {
     const newFirebaseToken = await user.getIdToken(); // Get new refreshed token
 
     // Send refreshed token to backend to update session cookie
-    await axios.post("http://localhost:5000/auth/refresh-token", {}, {
+    await axios.post("http://localhost:5000/api/auth/refresh-token", {}, {
       headers: { Authorization: `Bearer ${newFirebaseToken}` },
       withCredentials: true, // Ensures cookie is stored
     });

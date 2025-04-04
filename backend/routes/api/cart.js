@@ -1,7 +1,7 @@
 const express = require("express");
-const { authenticateFirebaseToken } = require("../middleware/firebaseAuthMiddleware");
+const { authenticateFirebaseToken } = require("../../middleware/firebaseAuthMiddleware");
 const router = express.Router();
-const db = require("../db"); // Your MySQL connection setup
+const db = require("../../db"); // Your MySQL connection setup
 
 // ✅ Fetch user's cart
 router.get("/", authenticateFirebaseToken, async (req, res) => {

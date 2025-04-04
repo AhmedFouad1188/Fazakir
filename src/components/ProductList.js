@@ -16,7 +16,7 @@ const ProductList = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await axios.get("http://localhost:5000/products");
+        const response = await axios.get("http://localhost:5000/api/products");
         setProducts(response.data);
 
         const initialQuantities = response.data.reduce((acc, product) => {
