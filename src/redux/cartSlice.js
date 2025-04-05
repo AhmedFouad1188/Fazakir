@@ -2,15 +2,9 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
 // Fetch cart items from backend
-export const fetchCart = createAsyncThunk("cart/fetchCart", async (_, { getState, rejectWithValue }) => {
+export const fetchCart = createAsyncThunk("cart/fetchCart", async (_, { rejectWithValue }) => {
   try {
-    const user = getState().auth.user;
-    if (!user?.token) return rejectWithValue("User not authenticated");
-
-    const response = await axios.get("http://localhost:5000/api/cart", 
-      { headers: { Authorization: `Bearer ${token}` },
-      withCredentials: true }
-    );
+    const response = await axios.get("http://localhost:5000/api/cart", { withCredentials: true });
 
     return response.data; // Backend should return cart items
   } catch (error) {
@@ -19,67 +13,39 @@ export const fetchCart = createAsyncThunk("cart/fetchCart", async (_, { getState
 });
 
 // Add item to cart
-export const addToCart = createAsyncThunk(
-  "cart/addToCart",
-  async ({ userId, productId, quantity }, { getState, rejectWithValue }) => {
-    try {
-      const user = getState().auth.user;
-      if (!user?.token) return rejectWithValue("User not authenticated");
-
-      const response = await axios.post("http://localhost:5000/api/cart", { userId, productId, quantity },
-        { headers: { Authorization: `Bearer ${token}` },
-        withCredentials: true }
-      );
+export const addToCart = createAsyncThunk("cart/addToCart", async ({ productId, quantity }, { rejectWithValue }) => {
+  try {
+      const response = await axios.post("http://localhost:5000/api/cart/add", { productId, quantity }, { withCredentials: true });
 
       return response.data; // Return the updated cart item
     } catch (error) {
+      console.error("Error occurred in API call:", error);
       return rejectWithValue(error.response?.data || "Failed to add item");
     }
   }
 );
 
 // Remove item from cart
-export const removeFromCart = createAsyncThunk("cart/removeFromCart", async (id, { getState, rejectWithValue }) => {
+export const removeFromCart = createAsyncThunk("cart/removeFromCart", async (product_id, { rejectWithValue }) => {
   try {
-    const user = getState().auth.user;
-    if (!user?.token) return rejectWithValue("User not authenticated");
+    await axios.delete(`http://localhost:5000/api/cart/${product_id}`, { withCredentials: true });
 
-    await axios.delete(`http://localhost:5000/api/cart/${id}`, 
-      { headers: { Authorization: `Bearer ${token}` },
-      withCredentials: true }
-    );
-
-    return id; // Return removed item ID to update Redux store
+    return product_id; // Return removed item ID to update Redux store
   } catch (error) {
     return rejectWithValue(error.response?.data || "Failed to remove item");
   }
 });
 
 // Clear entire cart
-export const clearCart = createAsyncThunk("cart/clearCart", async (_, { getState, rejectWithValue }) => {
+export const clearCart = createAsyncThunk("cart/clearCart", async (_, { rejectWithValue }) => {
   try {
-    const user = getState().auth.user;
-    if (!user?.token) return rejectWithValue("User not authenticated");
-
-    await axios.delete("http://localhost:5000/api/cart/clear", 
-      { headers: { Authorization: `Bearer ${token}` },
-      withCredentials: true }
-    );
+    await axios.delete("http://localhost:5000/api/cart/clear", { withCredentials: true });
 
     return []; // Return empty array to reset cart
   } catch (error) {
     return rejectWithValue(error.response?.data || "Failed to clear cart");
   }
 });
-
-// Initial state
-const initialState = {
-  items: [],
-  totalQuantity: 0,
-  totalPrice: 0,
-  status: "idle",
-  error: null,
-};
 
 const cartSlice = createSlice({
   name: "cart",
@@ -94,6 +60,7 @@ const cartSlice = createSlice({
       .addCase(fetchCart.pending, (state) => {
         state.status = "loading";
       })
+
       .addCase(fetchCart.fulfilled, (state, action) => {
         state.status = "succeeded";
         state.items = action.payload;
@@ -102,30 +69,34 @@ const cartSlice = createSlice({
         state.totalQuantity = action.payload.reduce((sum, item) => sum + item.quantity, 0);
         state.totalPrice = action.payload.reduce((sum, item) => sum + item.price * item.quantity, 0);
       })
+
       .addCase(fetchCart.rejected, (state, action) => {
         state.status = "failed";
         state.error = action.payload;
       })
+
       .addCase(addToCart.fulfilled, (state, action) => {
         const newItem = action.payload;
-        
-        // ✅ Check if item exists in cart
-        const existingItem = state.items.find((item) => item.id === newItem.id);
+      
+        // Assuming payload is just { productId, quantity }
+        const existingItem = state.items.find((item) => item.product_id === newItem.product_id);
         if (existingItem) {
-          existingItem.quantity += newItem.quantity;
+          existingItem.quantity = newItem.quantity;
         } else {
-          state.items.push(newItem);
+          state.items.push(newItem); // Make sure newItem includes price info if necessary
         }
-
-        // ✅ Update totalQuantity & totalPrice
+      
+        // Update totalQuantity & totalPrice if needed
         state.totalQuantity += newItem.quantity;
         state.totalPrice += newItem.price * newItem.quantity;
       })
+
       .addCase(addToCart.rejected, (state, action) => {
-        state.error = action.payload;
+        state.error = action.payload || "Failed to add item";
       })
+
       .addCase(removeFromCart.fulfilled, (state, action) => {
-        const removedItem = state.items.find((item) => item.id === action.payload);
+        const removedItem = state.items.find((item) => item.product_id === action.payload);
         if (removedItem) {
           // ✅ Deduct removed item quantity & price
           state.totalQuantity -= removedItem.quantity;
@@ -133,8 +104,9 @@ const cartSlice = createSlice({
         }
 
         // ✅ Filter out removed item
-        state.items = state.items.filter((item) => item.id !== action.payload);
+        state.items = state.items.filter((item) => item.product_id !== action.payload);
       })
+
       .addCase(clearCart.fulfilled, (state) => {
         state.items = [];
         state.totalQuantity = 0;

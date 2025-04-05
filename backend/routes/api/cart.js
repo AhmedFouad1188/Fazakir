@@ -5,9 +5,21 @@ const db = require("../../db"); // Your MySQL connection setup
 
 // ✅ Fetch user's cart
 router.get("/", authenticateFirebaseToken, async (req, res) => {
-  const firebaseUID = decodedToken.uid; // Unique user ID from Firebase
+  const firebaseUID = req.user.uid; // Extract Firebase UID from middleware
+
   try {
-    const [cartItems] = await db.query("SELECT * FROM cart WHERE firebase_uid = ?", [firebaseUID]);
+    const [cartItems] = await db.execute(`SELECT
+                c.product_id,
+                p.name AS name,
+                p.price AS price,
+                p.image_url AS image_url,
+                c.quantity
+            FROM
+                cart c
+            JOIN
+                products p ON c.product_id = p.id
+            WHERE
+                c.firebase_uid = ?`, [firebaseUID]);
     res.json(cartItems);
   } catch (error) {
     console.error("Error fetching cart:", error);
@@ -16,28 +28,37 @@ router.get("/", authenticateFirebaseToken, async (req, res) => {
 });
 
 // ✅ Add item to cart
-router.post("/", authenticateFirebaseToken, async (req, res) => {
+router.post("/add", authenticateFirebaseToken, async (req, res) => {
   try {
     const { productId, quantity } = req.body;
-    const firebaseUID = decodedToken.uid; // Unique user ID from Firebase
+    const firebaseUID = req.user.uid;
 
-    await db.query(
-      "INSERT INTO cart (firebase_uid, product_id, quantity) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE quantity = quantity + ?",
-      [firebaseUID, productId, quantity, quantity]
-    );
+    const sql = `
+      INSERT INTO cart (firebase_uid, product_id, quantity)
+      VALUES (?, ?, ?)
+      ON DUPLICATE KEY UPDATE quantity = ?`;
 
-    res.json({ ...product, quantity }); // ✅ Return full product details with quantity
+    await db.execute(sql, [firebaseUID, productId, quantity, quantity]);
+
+    const [productData] = await db.execute("SELECT * FROM products WHERE id = ?", [productId]);
+    const product = productData[0];
+
+    res.json({ ...product, quantity });
   } catch (error) {
+    console.error("DB Error:", error); // ✅ Add this
     res.status(500).json({ error: "Failed to add item to cart" });
   }
 });
 
 // ✅ Remove item from cart
-router.delete("/:id", authenticateFirebaseToken, async (req, res) => {
-  const firebaseUID = decodedToken.uid;
-  const product_id = req.params.id;
+router.delete("/:product_id", authenticateFirebaseToken, async (req, res) => {
+  const firebaseUID = req.user.uid; // Extract Firebase UID from middleware
+  const productId = req.params.product_id;
   try {
-    await db.query("DELETE FROM cart WHERE product_id = ? AND firebase_uid = ?", [productId, firebaseUID]);
+    const sql = `DELETE FROM cart WHERE product_id = ? AND firebase_uid = ?`;
+
+    await db.execute(sql, [productId, firebaseUID]);
+
     res.json({ success: true, message: "Item removed from cart" });
   } catch (error) {
     console.error("Error removing from cart:", error);

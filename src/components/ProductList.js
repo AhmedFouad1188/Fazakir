@@ -56,7 +56,6 @@ const ProductList = () => {
     }
 
     const cartItem = { 
-      userId: user.uid, 
       productId: product.id, 
       quantity: quantities[product.id] 
     };
