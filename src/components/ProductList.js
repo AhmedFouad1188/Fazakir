@@ -20,7 +20,7 @@ const ProductList = () => {
         setProducts(response.data);
 
         const initialQuantities = response.data.reduce((acc, product) => {
-          acc[product.id] = 1;
+          acc[product.product_id] = 1;
           return acc;
         }, {});
         setQuantities(initialQuantities);
@@ -35,17 +35,17 @@ const ProductList = () => {
     fetchProducts();
   }, []);
 
-  const handleIncrease = (id) => {
+  const handleIncrease = (product_id) => {
     setQuantities((prev) => ({
       ...prev,
-      [id]: prev[id] + 1,
+      [product_id]: prev[product_id] + 1,
     }));
   };
 
-  const handleDecrease = (id) => {
+  const handleDecrease = (product_id) => {
     setQuantities((prev) => ({
       ...prev,
-      [id]: prev[id] > 1 ? prev[id] - 1 : 1,
+      [product_id]: prev[product_id] > 1 ? prev[product_id] - 1 : 1,
     }));
   };
 
@@ -56,8 +56,8 @@ const ProductList = () => {
     }
 
     const cartItem = { 
-      productId: product.id, 
-      quantity: quantities[product.id] 
+      productId: product.product_id, 
+      quantity: quantities[product.product_id] 
     };
     
     try {
@@ -91,7 +91,7 @@ const ProductList = () => {
         {products.length > 0 ? (
           products.map((product) => (
             <div
-              key={product.id}
+              key={product.product_id}
               style={{
                 border: "1px solid #ddd",
                 borderRadius: "8px",
@@ -110,9 +110,9 @@ const ProductList = () => {
               <strong>${product.price}</strong>
 
               <div style={{ display: "flex", justifyContent: "center", alignItems: "center", marginTop: "10px" }}>
-                <button onClick={() => handleDecrease(product.id)} style={{ padding: "5px 10px", margin: "0 5px" }}>-</button>
-                <span>{quantities[product.id]}</span>
-                <button onClick={() => handleIncrease(product.id)} style={{ padding: "5px 10px", margin: "0 5px" }}>+</button>
+                <button onClick={() => handleDecrease(product.product_id)} style={{ padding: "5px 10px", margin: "0 5px" }}>-</button>
+                <span>{quantities[product.product_id]}</span>
+                <button onClick={() => handleIncrease(product.product_id)} style={{ padding: "5px 10px", margin: "0 5px" }}>+</button>
               </div>
 
               <button

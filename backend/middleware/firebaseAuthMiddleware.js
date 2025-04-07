@@ -1,5 +1,6 @@
 const admin = require("firebase-admin");
 const dotenv = require("dotenv");
+const db = require("../db");
 
 // Load environment variables
 dotenv.config();
@@ -35,8 +36,19 @@ const authenticateFirebaseToken = async (req, res, next) => {
     // Verify Firebase token
     const decodedToken = await admin.auth().verifyIdToken(token);
 
-    req.user = decodedToken; // Attach decoded user info to request
+    // 🔍 Fetch full user from MySQL using Firebase UID
+    const [rows] = await db.execute("SELECT * FROM users WHERE firebase_uid = ? LIMIT 1", [
+      decodedToken.uid,
+    ]);
     
+    if (rows.length > 0) {
+      // User exists in DB — attach full user data
+      req.user = rows[0];
+    } else {
+      // User doesn't exist yet — attach partial Firebase data
+      req.user = decodedToken;
+    }
+
     // ✅ Store token in HttpOnly cookie if not already set
     if (!req.cookies?.authToken) {
       res.cookie("authToken", token, {

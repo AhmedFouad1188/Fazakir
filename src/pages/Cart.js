@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { fetchCart, removeFromCart, addToCart } from "../redux/cartSlice"; // reuse addToCart
+import { fetchCart, removeFromCart, updateCartQuantity } from "../redux/cartSlice"; // reuse addToCart
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -24,10 +24,23 @@ const CartPage = () => {
     }
   };
 
-  const handleUpdateQuantity = (item, newQuantity) => {
-    if (newQuantity < 1) return;
-    dispatch(addToCart({ productId: item.product_id, quantity: newQuantity }));
+  const handleIncrease = async (item) => {  
+    try {
+      await dispatch(updateCartQuantity({ productId: item.product_id, quantity: item.quantity + 1 })).unwrap(); // add 1 to DB
+    } catch (error) {
+      toast.error("Failed to increase quantity.");
+    }
   };
+  
+  const handleDecrease = async (item) => {
+    if (item.quantity <= 1) return;
+  
+    try {
+      await dispatch(updateCartQuantity({ productId: item.product_id, quantity: item.quantity - 1 })).unwrap();
+    } catch (error) {
+      toast.error("Failed to decrease quantity.");
+    }
+  };  
 
   const totalPrice = cartItems.reduce(
     (acc, item) => acc + (item.price || 0) * (item.quantity || 1),
@@ -55,9 +68,9 @@ const CartPage = () => {
                 </span>
 
                 <div style={{ display: "flex", alignItems: "center" }}>
-                  <button onClick={() => handleUpdateQuantity(item, item.quantity - 1)} style={qtyBtnStyle}>–</button>
-                  <span style={{ margin: "0 10px" }}>{item.quantity}</span>
-                  <button onClick={() => handleUpdateQuantity(item, item.quantity + 1)} style={qtyBtnStyle}>+</button>
+                  <button onClick={() => handleDecrease(item)} disabled={item.quantity <= 1} style={{ marginRight: "5px", opacity: item.quantity <= 1 ? 0.5 : 1, cursor: item.quantity <= 1 ? "not-allowed" : "pointer" }}>−</button>
+                  <span>{item.quantity}</span>
+                  <button onClick={() => handleIncrease(item)} style={{ marginLeft: "5px" }}>+</button>
                 </div>
 
                 <button 
@@ -74,15 +87,6 @@ const CartPage = () => {
       )}
     </div>
   );
-};
-
-const qtyBtnStyle = {
-  background: "#333",
-  color: "white",
-  border: "none",
-  padding: "5px 10px",
-  cursor: "pointer",
-  borderRadius: "5px"
 };
 
 export default CartPage;

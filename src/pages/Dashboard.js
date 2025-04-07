@@ -117,7 +117,7 @@ const Dashboard = () => {
 
   // ✅ Handle product edit
   const handleEdit = (product) => {
-    setEditingProductId(product.id);
+    setEditingProductId(product.product_id);
     setProduct({
       name: product.name,
       price: product.price,
@@ -129,11 +129,11 @@ const Dashboard = () => {
   };
 
   // ✅ Handle product delete
-  const handleDelete = async (id) => {
+  const handleDelete = async (product_id) => {
     if (!window.confirm("Are you sure you want to delete this product?")) return;
 
     try {
-      await axios.delete(`http://localhost:5000/api/products/${id}`, { withCredentials: true });
+      await axios.delete(`http://localhost:5000/api/products/${product_id}`, { withCredentials: true });
       toast.success("Product deleted successfully");
       fetchProducts();
     } catch (error) {
@@ -174,7 +174,7 @@ const Dashboard = () => {
           </thead>
           <tbody>
             {products.map((product) => (
-              <tr key={product.id}>
+              <tr key={product.product_id}>
                 <td>{product.name}</td>
                 <td>${product.price}</td>
                 <td>{product.description}</td>
@@ -184,7 +184,7 @@ const Dashboard = () => {
                 </td>
                 <td>
                   <button onClick={() => handleEdit(product)}>Edit</button>
-                  <button onClick={() => handleDelete(product.id)} style={{ marginLeft: "10px", color: "red" }}>
+                  <button onClick={() => handleDelete(product.product_id)} style={{ marginLeft: "10px", color: "red" }}>
                     Delete
                   </button>
                 </td>

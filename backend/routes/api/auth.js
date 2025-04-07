@@ -2,10 +2,7 @@ const express = require("express");
 const { authenticateFirebaseToken, admin } = require("../../middleware/firebaseAuthMiddleware");
 const db = require("../../db"); // Import MySQL connection
 const router = express.Router();
-const normalizeUser = require("../../middleware/normalizeUser");
 const sendVerificationEmail = require("../../utils/sendVerificationEmail");
-
-router.use(normalizeUser);
 
 // Check if user exists
 const checkUser = async (firebaseUID) => {
@@ -122,7 +119,8 @@ router.post("/logout", (req, res) => {
 
 router.get("/me", authenticateFirebaseToken, async (req, res) => {
   try {
-    const user = await checkUser(req.user.uid);
+    const firebaseUID = req.user.firebase_uid;
+    const user = await checkUser(firebaseUID);
     if (!user) {
       return res.status(401).json({ error: "User not found" });
     }

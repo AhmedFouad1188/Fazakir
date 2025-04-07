@@ -18,12 +18,11 @@ export const addToCart = createAsyncThunk("cart/addToCart", async ({ productId, 
       const response = await axios.post("http://localhost:5000/api/cart/add", { productId, quantity }, { withCredentials: true });
 
       return response.data; // Return the updated cart item
-    } catch (error) {
+  } catch (error) {
       console.error("Error occurred in API call:", error);
       return rejectWithValue(error.response?.data || "Failed to add item");
     }
-  }
-);
+});
 
 // Remove item from cart
 export const removeFromCart = createAsyncThunk("cart/removeFromCart", async (product_id, { rejectWithValue }) => {
@@ -33,6 +32,16 @@ export const removeFromCart = createAsyncThunk("cart/removeFromCart", async (pro
     return product_id; // Return removed item ID to update Redux store
   } catch (error) {
     return rejectWithValue(error.response?.data || "Failed to remove item");
+  }
+});
+
+export const updateCartQuantity = createAsyncThunk("cart/updateCartQuantity", async ({ productId, quantity }, { rejectWithValue }) => {
+  try {
+    const response = await axios.put("http://localhost:5000/api/cart/update", { productId, quantity }, { withCredentials: true });
+
+    return response.data;
+  } catch (error) {
+    return rejectWithValue(error.response?.data || "Failed to update quantity");
   }
 });
 
@@ -63,6 +72,7 @@ const cartSlice = createSlice({
 
       .addCase(fetchCart.fulfilled, (state, action) => {
         state.status = "succeeded";
+        state.error = null;
         state.items = action.payload;
         
         // ✅ Calculate totalQuantity & totalPrice
@@ -77,18 +87,19 @@ const cartSlice = createSlice({
 
       .addCase(addToCart.fulfilled, (state, action) => {
         const newItem = action.payload;
+        const existingItemIndex = state.items.findIndex(item => item.product_id === newItem.product_id);
       
-        // Assuming payload is just { productId, quantity }
-        const existingItem = state.items.find((item) => item.product_id === newItem.product_id);
-        if (existingItem) {
-          existingItem.quantity = newItem.quantity;
+        if (existingItemIndex !== -1) {
+          // Update quantity if item exists
+          state.items[existingItemIndex].quantity = newItem.quantity;
         } else {
-          state.items.push(newItem); // Make sure newItem includes price info if necessary
-        }
+          // Add new item if not found
+          state.items.push(newItem);
+        }      
       
-        // Update totalQuantity & totalPrice if needed
-        state.totalQuantity += newItem.quantity;
-        state.totalPrice += newItem.price * newItem.quantity;
+        // ✅ Always recalculate totals to avoid duplicates or over-counting
+        state.totalQuantity = state.items.reduce((sum, item) => sum + item.quantity, 0);
+        state.totalPrice = state.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
       })
 
       .addCase(addToCart.rejected, (state, action) => {
@@ -111,7 +122,20 @@ const cartSlice = createSlice({
         state.items = [];
         state.totalQuantity = 0;
         state.totalPrice = 0;
-      });
+      })
+
+      .addCase(updateCartQuantity.fulfilled, (state, action) => {
+        const { product_id, quantity } = action.payload;
+        const existingItem = state.items.find(item => item.product_id === product_id);
+      
+        if (existingItem) {
+          existingItem.quantity = quantity;
+        
+          // 🔁 Recalculate totals
+          state.totalQuantity = state.items.reduce((sum, item) => sum + item.quantity, 0);
+          state.totalPrice = state.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+        }        
+      })
   },
 });
 
