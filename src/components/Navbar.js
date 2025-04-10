@@ -36,7 +36,7 @@ const Navbar = () => {
 
         {user ? (
           <>
-            <Link to="/profile" style={{ color: "#fff", textDecoration: "none" }}>Profile</Link>
+            <Link to="/account" style={{ color: "#fff", textDecoration: "none" }}>Account</Link>
             <button 
               onClick={handleLogout} 
               style={{ 

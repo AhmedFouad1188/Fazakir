@@ -10,7 +10,7 @@ import Checkout from "./pages/Checkout";
 import Login from "./pages/Login";
 import ForgotPassword from "./pages/forgot-password";
 import Signup from "./pages/Signup";
-import Profile from "./pages/Profile";
+import Account from "./pages/Account";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import Dashboard from "./pages/Dashboard";
@@ -47,7 +47,7 @@ function App() {
         
         {/* ✅ Protected Routes */}
         <Route element={<ProtectedRoute />}>
-          <Route path="/profile" element={<Profile />} />
+          <Route path="/account" element={<Account />} />
           <Route path="/checkout" element={<Checkout />} />
         </Route>
 

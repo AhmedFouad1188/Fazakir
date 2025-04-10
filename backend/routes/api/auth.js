@@ -20,10 +20,6 @@ const insertUser = async (firebaseUID, firstname, lastname, email) => {
   const sql = `
     INSERT INTO users (firebase_uid, firstname, lastname, email)
     VALUES (?, ?, ?, ?)
-    ON DUPLICATE KEY UPDATE 
-      firstname = VALUES(firstname), 
-      lastname = VALUES(lastname), 
-      email = VALUES(email);
   `;
 
   await db.execute(sql, [firebaseUID, firstname, lastname, email]);
@@ -44,22 +40,16 @@ router.post("/register", authenticateFirebaseToken, async (req, res) => {
     // Extract form data from request body
     const { firstname, lastname, country, countrycode, mobile } = req.body;
 
-    if (!firstname || !lastname || !country || !countrycode || !mobile) {
+    if (!firstname || !lastname || !country || !mobile) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
     const sql = `
-      INSERT INTO users (firebase_uid, firstname, lastname, country, mobile, email)
-      VALUES (?, ?, ?, ?, ?, ?)
-      ON DUPLICATE KEY UPDATE 
-      firstname = VALUES(firstname), 
-      lastname = VALUES(lastname), 
-      country = VALUES(country), 
-      mobile = VALUES(mobile), 
-      email = VALUES(email);
+      INSERT INTO users (firebase_uid, firstname, lastname, country, c_code, mobile, email)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
     `;
 
-    await db.execute(sql, [firebaseUID, firstname, lastname, country, countrycode + mobile, email]);
+    await db.execute(sql, [firebaseUID, firstname, lastname, country, countrycode, mobile, email]);
     
       res.json({
         message: "User registered successfully!",
@@ -90,10 +80,10 @@ router.post("/send-verification-email", authenticateFirebaseToken, async (req, r
  */
 router.post("/login", authenticateFirebaseToken, async (req, res) => {
   try {
-    const firebaseUID = req.user.uid;
+    const firebaseUID = req.user.firebase_uid || req.user.uid;
     const email = req.user.email;
-    const firstname = req.user.given_name || req.user.name?.split(" ")[0] || "Unknown";
-    const lastname = req.user.family_name || req.user.name?.split(" ")[1] || "Unknown";
+    const firstname = req.user.given_name || req.user.firstname?.split(" ")[0] || "Unknown";
+    const lastname = req.user.family_name || req.user.lastname?.split(" ")[1] || "Unknown";
 
     let user = await checkUser(firebaseUID) || await insertUser(firebaseUID, firstname, lastname, email);
 
@@ -153,6 +143,34 @@ router.post("/refresh-token", async (req, res) => {
   } catch (error) {
     console.error("Token refresh failed:", error);
     return res.status(403).json({ error: "Invalid or expired token" });
+  }
+});
+
+router.put("/accountupdate", authenticateFirebaseToken, async (req, res) => {
+  try {
+    const firebaseUID = req.user.firebase_uid; // Extract Firebase UID from middleware
+
+    // Extract form data from request body
+    const { firstname, lastname, country, countrycode, mobile, governorate, district, street, building, floor, apartment, landmark } = req.body;
+
+    if (!firstname || !lastname || !country || !mobile || !street) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    const sql = `
+      UPDATE users 
+      SET firstname = ?, lastname = ?, country = ?, c_code = ?, mobile = ?, governorate = ?, district = ?, street = ?, building = ?, floor = ?, apartment = ?, landmark = ?
+      WHERE firebase_uid = ?
+    `;
+
+    await db.execute(sql, [firstname, lastname, country, countrycode, mobile, governorate, district, street, building, floor, apartment, landmark, firebaseUID]);
+    
+      res.json({
+        message: "User account updated successfully!",
+      });
+
+  } catch (error) {
+    res.status(500).json({ error: "Server error: " + error.message });
   }
 });
 
