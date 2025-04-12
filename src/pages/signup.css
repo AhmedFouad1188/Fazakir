@@ -27,7 +27,7 @@ input {
     font-size: 1rem;
 }
 
-#countrycode {
+#dial_code {
     width: 5vw;
     pointer-events: none;
     box-shadow: none;

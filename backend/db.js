@@ -1,5 +1,4 @@
 const mysql = require("mysql2/promise"); // Use promise-based MySQL2
-require("dotenv").config();
 
 // ✅ Validate required environment variables
 const requiredEnv = ["DB_HOST", "DB_USER", "DB_PASSWORD", "DB_NAME", "DB_PORT"];

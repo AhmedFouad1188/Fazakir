@@ -1,9 +1,5 @@
 const admin = require("firebase-admin");
-const dotenv = require("dotenv");
 const db = require("../db");
-
-// Load environment variables
-dotenv.config();
 
 // Initialize Firebase Admin SDK using environment variables
 if (!admin.apps.length) {

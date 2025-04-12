@@ -11,6 +11,7 @@ import Login from "./pages/Login";
 import ForgotPassword from "./pages/forgot-password";
 import Signup from "./pages/Signup";
 import Account from "./pages/Account";
+import RecoverAccount from "./pages/recover-account";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import Dashboard from "./pages/Dashboard";
@@ -43,11 +44,11 @@ function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/shop" element={<Shop />} />
-        <Route path="/cart" element={<CartPage />} />
         
         {/* ✅ Protected Routes */}
         <Route element={<ProtectedRoute />}>
           <Route path="/account" element={<Account />} />
+          <Route path="/cart" element={<CartPage />} />
           <Route path="/checkout" element={<Checkout />} />
         </Route>
 
@@ -59,6 +60,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/recover-account" element={<RecoverAccount />} />
       </Routes>
       <Footer />
     </CartProvider>

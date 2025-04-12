@@ -1,6 +1,5 @@
 const nodemailer = require("nodemailer");
 const { admin } = require("../middleware/firebaseAuthMiddleware");
-require("dotenv").config();
 
 // Configure Nodemailer Transporter
 const transporter = nodemailer.createTransport({

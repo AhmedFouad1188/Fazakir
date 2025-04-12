@@ -1,11 +1,15 @@
 import { useEffect, useState } from "react";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { logout } from "../redux/authSlice";
 import axios from "axios";
 import CountrySelect from "../components/CountrySelect";
 import examples from 'libphonenumber-js/examples.mobile.json';
 
 const Account = () => {
   const user = useSelector((state) => state.auth.user);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
   const [account, setAccount] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -25,7 +29,7 @@ const Account = () => {
           lastname: user.lastname || "",
           email: user.email || "",
           country: user.country || "",
-          countrycode: user.c_code || "",
+          dial_code: user.dial_code || "",
           mobile: user.mobile || "",
           governorate: user.governorate || "",
           district: user.district || "",
@@ -57,6 +61,27 @@ const Account = () => {
     setSuccess("");
   };
 
+  const handleCountryChange = (selectedCountry) => {
+    const dial_code = selectedCountry.data.idd.root + selectedCountry.data.idd.suffixes;
+    const countryCode = selectedCountry.data.cca2;
+    const country = selectedCountry.data.name.common;
+
+    const getMobileMaxLength = (countryCode) => {
+      const example = examples[countryCode]; // just a string like "501234567"
+      if (example) return example.length;
+      return 15; // fallback
+    };
+
+    const maxLength = getMobileMaxLength(countryCode);
+    setMobileMaxLength(maxLength);
+
+    setAccount((prev) => ({
+      ...prev,
+      country,
+      dial_code,
+    }));
+  };
+
   const handleSave = async () => {
     setLoading(true);
     setSuccess("");
@@ -70,25 +95,19 @@ const Account = () => {
     setLoading(false);
   };
 
-  const handleCountryChange = (selectedCountry) => {
-    const dial_code = selectedCountry.data.idd.root + selectedCountry.data.idd.suffixes;
-    const countryCode = selectedCountry.data.cca2;
+  const handleSoftDelete = async () => {
+    if (!window.confirm("Are you sure you want to delete your account? You can recover it within 30 days.")) return;
+  
+    try {
+      await axios.post("http://localhost:5000/api/auth/soft-delete", {}, { withCredentials: true });
+      alert("Account marked for deletion. You have 30 days to recover it.");
 
-    const getMobileMaxLength = (countryCode) => {
-      const example = examples[countryCode]; // just a string like "501234567"
-      if (example) return example.length;
-      return 15; // fallback
-    };
-
-    const maxLength = getMobileMaxLength(countryCode);
-    setMobileMaxLength(maxLength);
-
-    setAccount((prev) => ({
-      ...prev,
-      country: selectedCountry.data.name.common,
-      dial_code,
-      countrycode: countryCode,
-    }));
+      await dispatch(logout()).unwrap();
+      navigate("/");
+    } catch (error) {
+      console.error("Soft delete failed:", error);
+      alert("Failed to delete account.");
+    }
   };
 
   if (error) return <p style={{ color: "red" }}>{error}</p>;
@@ -108,13 +127,7 @@ const Account = () => {
         <input name="email" value={account.email} readOnly />
 
         <label>Country:</label>
-        <CountrySelect
-          onChange={handleCountryChange}
-          defaultValue={{
-            value: account.countrycode,
-            label: `${account.country} (${account.dial_code})`,
-          }}
-        />
+        <CountrySelect onChange={handleCountryChange} value={account.country} required />
 
         <input name="countrycode" value={account.dial_code} onChange={handleChange} readOnly />
 
@@ -154,6 +167,10 @@ const Account = () => {
         </button>
       </div>
       {success && <p style={{ color: "green" }}>{success}</p>}
+
+      <button onClick={handleSoftDelete} style={{ marginTop: 20, color: "red" }}>
+        Delete My Account
+      </button>
     </div>
   );
 };

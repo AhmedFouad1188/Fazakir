@@ -11,6 +11,7 @@
     "@testing-library/user-event": "^13.5.0",
     "axios": "^1.8.2",
     "firebase": "^11.4.0",
+    "jsonwebtoken": "^9.0.2",
     "libphonenumber-js": "^1.12.6",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

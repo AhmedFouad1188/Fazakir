@@ -1,9 +1,10 @@
+require("dotenv").config();
 const express = require("express");
 const db = require("./db"); // 👈 Import the database connection
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const rateLimit = require("express-rate-limit");
-require("dotenv").config();
+require('./cron/hardDelete');
 
 console.log("Running in:", process.env.NODE_ENV); // Debugging
 

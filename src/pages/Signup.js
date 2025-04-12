@@ -4,26 +4,49 @@ import { useDispatch } from "react-redux";
 import { signup } from "../redux/authSlice";
 import "./signup.css";
 import CountrySelect from "../components/CountrySelect"; // Make sure to import the CountrySelect component
+import examples from 'libphonenumber-js/examples.mobile.json';
 
 const Signup = () => {
   const [formData, setFormData] = useState({
     firstname: "",
     lastname: "",
     country: "",
-    countrycode: "",
+    dial_code: "",
     mobile: "",
     email: "",
     password: ""
-});
+  });
 
   const [error, setError] = useState("");
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [mobileMaxLength, setMobileMaxLength] = useState(15); // Fallback to a max length of 15
 
   // Handle form input changes
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
-};
+  };
+
+  const handleCountryChange = (selectedCountry) => {
+    const dial_code = selectedCountry.data.idd.root + selectedCountry.data.idd.suffixes;
+    const countryCode = selectedCountry.data.cca2;
+    const country = selectedCountry.data.name.common;
+
+    const getMobileMaxLength = (countryCode) => {
+      const example = examples[countryCode]; // just a string like "501234567"
+      if (example) return example.length;
+      return 15; // fallback
+    };
+
+    const maxLength = getMobileMaxLength(countryCode);
+    setMobileMaxLength(maxLength);
+
+    setFormData((prev) => ({
+      ...prev,
+      country,
+      dial_code,
+    }));
+  };
 
   const handleSignup = async () => {
     try {
@@ -61,29 +84,16 @@ const Signup = () => {
         </label>
 
         <div>
-        <label htmlFor="countrycode">
-        <input type="text" id="countrycode" name="countrycode" value={formData.dial_code} onChange={handleChange} readOnly/>
+        <label htmlFor="dial_code">
+        <input type="text" id="dial_code" name="dial_code" value={formData.dial_code} onChange={handleChange} readOnly />
         </label>
         <label htmlFor="mobile">
-        <input type="tel" id="mobile" name="mobile" placeholder="* رقم الموبايل" onChange={handleChange} required/>
+        <input type="tel" id="mobile" name="mobile" onChange={handleChange} maxLength={mobileMaxLength} title={`رقم الموبايل يجب أن يكون ${mobileMaxLength} ارقام`} placeholder="رقم الموبايل" required/>
         </label>
         </div>
 
-        <label htmlFor="country">
-        <CountrySelect
-          onChange={(selectedCountry) => {
-            setFormData((prev) => ({
-              ...prev,
-              country: selectedCountry.data.name.common, // Use the correct name property
-              dial_code: selectedCountry.data.idd.root+selectedCountry.data.idd.suffixes,
-              countrycode: selectedCountry.data.cca2,
-            }));
-          }}
-          defaultValue={{
-            value: formData.countrycode, 
-            label: `${formData.country} (${formData.dial_code})`, // Pre-select country with its code
-          }}
-        />
+        <label htmlFor="country" id="country">
+        <CountrySelect onChange={handleCountryChange} required />
         </label>
 
         <label htmlFor="password">

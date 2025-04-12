@@ -3,6 +3,10 @@ const { authenticateFirebaseToken, admin } = require("../../middleware/firebaseA
 const db = require("../../db"); // Import MySQL connection
 const router = express.Router();
 const sendVerificationEmail = require("../../utils/sendVerificationEmail");
+const jwt = require('jsonwebtoken');
+const { sendRecoveryEmail } = require("../../utils/sendRecoveryEmail");
+
+const JWT_SECRET = process.env.JWT_SECRET;
 
 // Check if user exists
 const checkUser = async (firebaseUID) => {
@@ -20,6 +24,11 @@ const insertUser = async (firebaseUID, firstname, lastname, email) => {
   const sql = `
     INSERT INTO users (firebase_uid, firstname, lastname, email)
     VALUES (?, ?, ?, ?)
+    ON DUPLICATE KEY UPDATE
+      firebase_uid = VALUES(firebase_uid),
+      firstname = VALUES(firstname),
+      lastname = VALUES(lastname),
+      email = VALUES(email)
   `;
 
   await db.execute(sql, [firebaseUID, firstname, lastname, email]);
@@ -38,23 +47,33 @@ router.post("/register", authenticateFirebaseToken, async (req, res) => {
     const email = req.user.email;
 
     // Extract form data from request body
-    const { firstname, lastname, country, countrycode, mobile } = req.body;
+    const { firstname, lastname, country, dial_code, mobile } = req.body;
 
     if (!firstname || !lastname || !country || !mobile) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
     const sql = `
-      INSERT INTO users (firebase_uid, firstname, lastname, country, c_code, mobile, email)
+      INSERT INTO users (firebase_uid, firstname, lastname, country, dial_code, mobile, email)
       VALUES (?, ?, ?, ?, ?, ?, ?)
+      ON DUPLICATE KEY UPDATE
+        firebase_uid = VALUES(firebase_uid),
+        firstname = VALUES(firstname),
+        lastname = VALUES(lastname),
+        country = VALUES(country),
+        dial_code = VALUES(dial_code),
+        mobile = VALUES(mobile),
+        email = VALUES(email),
+        isdeleted = DEFAULT(isdeleted),
+        deleted_at = DEFAULT(deleted_at)
     `;
 
-    await db.execute(sql, [firebaseUID, firstname, lastname, country, countrycode, mobile, email]);
+    await db.execute(sql, [firebaseUID, firstname, lastname, country, dial_code, mobile, email]);
     
-      res.json({
-        message: "User registered successfully!",
-        user: { firebaseUID, firstname, lastname, country, countrycode, mobile, email },
-      });
+    res.json({
+      message: "User registered successfully!",
+      user: { firebaseUID, firstname, lastname, country, dial_code, mobile, email },
+    });
 
   } catch (error) {
     res.status(500).json({ error: "Server error: " + error.message });
@@ -82,8 +101,8 @@ router.post("/login", authenticateFirebaseToken, async (req, res) => {
   try {
     const firebaseUID = req.user.firebase_uid || req.user.uid;
     const email = req.user.email;
-    const firstname = req.user.given_name || req.user.firstname?.split(" ")[0] || "Unknown";
-    const lastname = req.user.family_name || req.user.lastname?.split(" ")[1] || "Unknown";
+    const firstname = req.user.given_name || req.user.name?.split(" ")[0] || "Unknown";
+    const lastname = req.user.family_name || req.user.name?.split(" ")[1] || "Unknown";
 
     let user = await checkUser(firebaseUID) || await insertUser(firebaseUID, firstname, lastname, email);
 
@@ -109,7 +128,7 @@ router.post("/logout", (req, res) => {
 
 router.get("/me", authenticateFirebaseToken, async (req, res) => {
   try {
-    const firebaseUID = req.user.firebase_uid;
+    const firebaseUID = req.user.firebase_uid || req.user.uid;
     const user = await checkUser(firebaseUID);
     if (!user) {
       return res.status(401).json({ error: "User not found" });
@@ -151,7 +170,7 @@ router.put("/accountupdate", authenticateFirebaseToken, async (req, res) => {
     const firebaseUID = req.user.firebase_uid; // Extract Firebase UID from middleware
 
     // Extract form data from request body
-    const { firstname, lastname, country, countrycode, mobile, governorate, district, street, building, floor, apartment, landmark } = req.body;
+    const { firstname, lastname, country, dial_code, mobile, governorate, district, street, building, floor, apartment, landmark } = req.body;
 
     if (!firstname || !lastname || !country || !mobile || !street) {
       return res.status(400).json({ error: "Missing required fields" });
@@ -159,11 +178,11 @@ router.put("/accountupdate", authenticateFirebaseToken, async (req, res) => {
 
     const sql = `
       UPDATE users 
-      SET firstname = ?, lastname = ?, country = ?, c_code = ?, mobile = ?, governorate = ?, district = ?, street = ?, building = ?, floor = ?, apartment = ?, landmark = ?
+      SET firstname = ?, lastname = ?, country = ?, dial_code = ?, mobile = ?, governorate = ?, district = ?, street = ?, building = ?, floor = ?, apartment = ?, landmark = ?
       WHERE firebase_uid = ?
     `;
 
-    await db.execute(sql, [firstname, lastname, country, countrycode, mobile, governorate, district, street, building, floor, apartment, landmark, firebaseUID]);
+    await db.execute(sql, [firstname, lastname, country, dial_code, mobile, governorate, district, street, building, floor, apartment, landmark, firebaseUID]);
     
       res.json({
         message: "User account updated successfully!",
@@ -171,6 +190,53 @@ router.put("/accountupdate", authenticateFirebaseToken, async (req, res) => {
 
   } catch (error) {
     res.status(500).json({ error: "Server error: " + error.message });
+  }
+});
+
+// routes/auth.js
+router.post('/soft-delete', authenticateFirebaseToken, async (req, res) => {
+  const firebaseUID = req.user.firebase_uid;
+  const email = req.user.email;
+
+  try {
+    // 1. Disable Firebase user
+    await admin.auth().updateUser(firebaseUID, { disabled: true });
+
+    // 2. Update DB flag and deletion timestamp
+    await db.query(
+      'UPDATE users SET isdeleted = 1, deleted_at = NOW() WHERE firebase_uid = ?',
+      [firebaseUID]
+    );
+
+    await sendRecoveryEmail(email, firebaseUID);
+
+    res.send({ message: "User soft-deleted successfully." });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Soft delete failed.");
+  }
+});
+
+router.post('/recover-account', async (req, res) => {
+  const { token } = req.body;
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const uid = decoded.uid;
+
+    // Enable Firebase user
+    await admin.auth().updateUser(uid, { disabled: false });
+
+    // Restore DB user
+    await db.query(
+      'UPDATE users SET isdeleted = 0, deleted_at = NULL WHERE firebase_uid = ?',
+      [uid]
+    );
+
+    res.send({ message: "Account successfully recovered." });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Account recovery failed.");
   }
 });
 
