@@ -1,5 +1,6 @@
 const express = require("express");
 const { authenticateFirebaseToken, admin } = require("../../middleware/firebaseAuthMiddleware");
+const adminOnly = require("../../middleware/authenticateAdmin");
 const db = require("../../db"); // Import MySQL connection
 const router = express.Router();
 const sendVerificationEmail = require("../../utils/sendVerificationEmail");
@@ -69,6 +70,8 @@ router.post("/register", authenticateFirebaseToken, async (req, res) => {
     `;
 
     await db.execute(sql, [firebaseUID, firstname, lastname, country, dial_code, mobile, email]);
+
+    await sendVerificationEmail(email);
     
     res.json({
       message: "User registered successfully!",
@@ -77,19 +80,6 @@ router.post("/register", authenticateFirebaseToken, async (req, res) => {
 
   } catch (error) {
     res.status(500).json({ error: "Server error: " + error.message });
-  }
-});
-
-router.post("/send-verification-email", authenticateFirebaseToken, async (req, res) => {
-  const firebaseUID = req.user.uid;
-  const email = req.user.email;
-
-  try {
-    await sendVerificationEmail(email, firebaseUID); // Send email verification
-    res.status(200).json({ message: "Verification email sent" });
-  } catch (error) {
-    console.error("Error sending verification email:", error);
-    res.status(500).json({ message: "Failed to send verification email" });
   }
 });
 
@@ -237,6 +227,17 @@ router.post('/recover-account', async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).send("Account recovery failed.");
+  }
+});
+
+router.get("/fetchUsers", authenticateFirebaseToken, adminOnly, async (req, res) => {
+  try {
+    const [results] = await db.execute("SELECT * FROM users");
+
+    res.json(results);
+  } catch (error) {
+    console.error("❌ Error fetching users:", error);
+    res.status(500).json({ error: "Server error" });
   }
 });
 

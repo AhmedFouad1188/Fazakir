@@ -36,7 +36,11 @@ const Navbar = () => {
 
         {user ? (
           <>
+            <Link to="/orders" style={{ color: "#fff", textDecoration: "none" }}>Orders</Link>
             <Link to="/account" style={{ color: "#fff", textDecoration: "none" }}>Account</Link>
+            {user.is_admin && (
+              <Link to="/admin" style={{ color: "#fff", textDecoration: "none" }}>Dashboard</Link>
+            )}
             <button 
               onClick={handleLogout} 
               style={{ 

@@ -29,10 +29,12 @@ app.use(cookieParser()); // Parse cookies
 const productsRoutes = require("./routes/api/products");
 const authRoutes = require("./routes/api/auth");
 const cartRoutes = require("./routes/api/cart");
+const orderRoutes = require("./routes/api/orders");
 
 app.use("/api/products", productsRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/cart", cartRoutes);
+app.use("/api/orders", orderRoutes);
 app.use("/uploads", express.static("uploads"));
 
 // 1️⃣ Global Rate Limit (100 requests per 15 min)

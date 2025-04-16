@@ -50,6 +50,20 @@ router.post("/add", authenticateFirebaseToken, async (req, res) => {
   }
 });
 
+router.delete("/clear", authenticateFirebaseToken, async (req, res) => {
+  const firebaseUID = req.user.firebase_uid; // Extract Firebase UID from middleware
+  try {
+    const sql = `DELETE FROM cart WHERE firebase_uid = ?`;
+
+    await db.execute(sql, [firebaseUID]);
+
+    res.json({ success: true, message: "Cart cleared" });
+  } catch (error) {
+    console.error("Error clearing cart:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
 // ✅ Remove item from cart
 router.delete("/:product_id", authenticateFirebaseToken, async (req, res) => {
   const firebaseUID = req.user.firebase_uid; // Extract Firebase UID from middleware

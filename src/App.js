@@ -7,6 +7,9 @@ import Home from "./pages/Home";
 import Shop from "./pages/Shop";
 import CartPage from "./pages/Cart";
 import Checkout from "./pages/Checkout";
+import ThankYou from "./pages/thankyou";
+import Orders from "./pages/Orders";
+import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
 import ForgotPassword from "./pages/forgot-password";
 import Signup from "./pages/Signup";
@@ -14,7 +17,6 @@ import Account from "./pages/Account";
 import RecoverAccount from "./pages/recover-account";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
-import Dashboard from "./pages/Dashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { CartProvider } from "./context/CartContext";
 import { ToastContainer } from "react-toastify";
@@ -50,6 +52,8 @@ function App() {
           <Route path="/account" element={<Account />} />
           <Route path="/cart" element={<CartPage />} />
           <Route path="/checkout" element={<Checkout />} />
+          <Route path="/thankyou" element={<ThankYou />} />
+          <Route path="/Orders" element={<Orders />} />
         </Route>
 
         {/* ✅ Admin Dashboard (Protected) */}

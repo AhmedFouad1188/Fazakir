@@ -118,10 +118,18 @@ const cartSlice = createSlice({
         state.items = state.items.filter((item) => item.product_id !== action.payload);
       })
 
+      .addCase(removeFromCart.rejected, (state, action) => {
+        state.error = action.payload || "Failed to remove item";
+      })
+
       .addCase(clearCart.fulfilled, (state) => {
         state.items = [];
         state.totalQuantity = 0;
         state.totalPrice = 0;
+      })
+
+      .addCase(clearCart.rejected, (state, action) => {
+        state.error = action.payload || "Failed to clear cart";
       })
 
       .addCase(updateCartQuantity.fulfilled, (state, action) => {
@@ -135,6 +143,10 @@ const cartSlice = createSlice({
           state.totalQuantity = state.items.reduce((sum, item) => sum + item.quantity, 0);
           state.totalPrice = state.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
         }        
+      })
+
+      .addCase(updateCartQuantity.rejected, (state, action) => {
+        state.error = action.payload || "Failed to update item quantity";
       })
   },
 });

@@ -13,7 +13,7 @@ const transporter = nodemailer.createTransport({
 });
 
 // Function to Send a Custom Email Verification Link
-const sendVerificationEmail = async (email, firebaseUID) => {
+const sendVerificationEmail = async (email) => {
   try {
     // Generate Firebase Email Verification Link
     const actionCodeSettings = {

@@ -28,16 +28,6 @@ export const signup = createAsyncThunk("auth/signup", async (formData, { rejectW
         withCredentials: true }
     );
 
-    // Send email verification request to the backend
-    const response2 = await axios.post("http://localhost:5000/api/auth/send-verification-email", {},
-      { headers: { Authorization: `Bearer ${token}` },
-        withCredentials: true }
-    );
-
-    if (response2.status === 200) {
-      console.log("Verification email sent successfully.");
-    };
-
     return response.data.user;
   } catch (error) {
     return rejectWithValue({ code: error.code, message: error.message });

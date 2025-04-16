@@ -83,6 +83,20 @@ const CartPage = () => {
             ))}
           </ul>
           <h3>Total: ${totalPrice.toFixed(2)}</h3>
+          <button 
+            onClick={() => window.location.href = "/checkout"}
+            style={{
+              marginTop: "20px",
+              padding: "10px 20px",
+              backgroundColor: "#28a745",
+              color: "white",
+              border: "none",
+              borderRadius: "5px",
+              cursor: "pointer"
+            }}
+          >
+            Place Your Order
+          </button>
         </>
       )}
     </div>
