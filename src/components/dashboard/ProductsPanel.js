@@ -16,12 +16,13 @@ const ProductsPanel = () => {
   const [preview, setPreview] = useState(null);
   const [editingProductId, setEditingProductId] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   const fetchProducts = async () => {
       setLoading(true);
     try {
-      const res = await axios.get("http://localhost:5000/api/products", { withCredentials: true });  
+      const res = await axios.get("http://localhost:5000/api/products/dashboard_fetch", { withCredentials: true });  
       if (res.data.length === 0) {
           console.log("No products available.");
         }  
@@ -112,13 +113,25 @@ const ProductsPanel = () => {
     if (!window.confirm("Are you sure you want to delete this product?")) return;
 
     try {
-      await axios.delete(`http://localhost:5000/api/products/${product_id}`, { withCredentials: true });
+      await axios.put(`http://localhost:5000/api/products/${product_id}/delete`, { withCredentials: true });
       toast.success("Product deleted successfully");
       fetchProducts();
     } catch (error) {
       toast.error("Error deleting product. Please try again.");
     }
   };
+
+  const handleRestore = async (product_id) => {
+    try {
+      await axios.put(`http://localhost:5000/api/products/${product_id}/restore`, null, {
+        withCredentials: true,
+      });
+      toast.success("Product restored successfully");
+      fetchProducts();
+    } catch (error) {
+      toast.error("Failed to restore product");
+    }
+  };  
 
   if (loading) return <p>Loading products...</p>;
 
@@ -151,6 +164,14 @@ const ProductsPanel = () => {
       ) : products.length === 0 ? (
         <p>No products found.</p>
       ) : (
+        <>
+        <input
+          type="text"
+          placeholder="Search products..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          style={{ marginBottom: "10px", padding: "5px", width: "300px" }}
+        />
         <table border="1">
           <thead>
             <tr>
@@ -163,25 +184,47 @@ const ProductsPanel = () => {
             </tr>
           </thead>
           <tbody>
-            {products.map((product) => (
-              <tr key={product.product_id}>
-                <td>{product.name}</td>
-                <td>${product.price}</td>
-                <td>{product.description}</td>
-                <td>{product.stock}</td>
-                <td>
-                  {product.image_url && <img src={`http://localhost:5000${product.image_url}`} alt={product.name} width="50" />}
-                </td>
-                <td>
-                  <button onClick={() => handleEdit(product)}>Edit</button>
-                  <button onClick={() => handleDelete(product.product_id)} style={{ marginLeft: "10px", color: "red" }}>
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))}
+          {products
+            .filter((product) =>
+              `${product.name} ${product.description}`
+                .toLowerCase()
+                .includes(searchTerm.toLowerCase())
+            )
+            .map((product) => {
+              return (
+                <tr key={product.product_id}>
+                  <td>{product.name}</td>
+                  <td>${product.price}</td>
+                  <td>{product.description}</td>
+                  <td>{product.stock}</td>
+                  <td>
+                    {product.image_url && <img src={`http://localhost:5000${product.image_url}`} alt={product.name} width="50" />}
+                  </td>
+                  <td>
+                    {product.isdeleted ? (
+                      <>
+                        <span style={{ color: "red", fontWeight: "bold" }}>Deleted</span>
+                        <br />
+                        <button onClick={() => handleRestore(product.product_id)} style={{ marginTop: "5px", color: "green" }}>
+                          Restore
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button onClick={() => handleEdit(product)}>Edit</button>
+                        <button onClick={() => handleDelete(product.product_id)} style={{ marginLeft: "10px", color: "red" }}>
+                          Delete
+                        </button>
+                      </>
+                    )}
+                  </td>
+                </tr>
+              )
+            })
+          }
           </tbody>
         </table>
+        </>
       )}
     </div>
   );

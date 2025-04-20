@@ -12,7 +12,7 @@ const transporter = nodemailer.createTransport({
 });
 
 // Function to Send a Custom Email Verification Link
-const sendOrderPlacedEmail = async (shipping_details, payment_method, productDetails, total_price, orderId) => {
+const sendOrderPlacedEmail = async (shipping_details, payment_method, products, total_price, orderId) => {
   try {
     // Email Template
     const mailOptions = {
@@ -24,7 +24,7 @@ const sendOrderPlacedEmail = async (shipping_details, payment_method, productDet
         <p>Thank you for purchasing from Fazakir.com</p>
         <p>Your order no. ${orderId} is placed successfully</p>
         <p>Order Details :</p>
-        ${productDetails.map(p => `
+        ${products.map(p => `
           <div style="display: flex; align-items: center; margin-bottom: 10px;">
             <img
               src="${p.image_url.startsWith("http") ? p.image_url : `http://localhost:5000${p.image_url}`}"
@@ -50,7 +50,7 @@ const sendOrderPlacedEmail = async (shipping_details, payment_method, productDet
     await transporter.sendMail(mailOptions);
     console.log(`✅ Order placed email sent to ${shipping_details.email}`);
   } catch (error) {
-    console.error("❌ Error sending verification email:", error.message);
+    console.error("❌ Error sending order email:", error.message);
   }
 };
 

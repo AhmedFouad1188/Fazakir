@@ -1,22 +1,25 @@
 const express = require("express");
-const db = require("../../db"); // Database connection
+const db = require("../../db");
 const multer = require("multer");
 const path = require("path");
+const fs = require("fs");
+const sharp = require("sharp");
 const { body, validationResult } = require("express-validator");
 const { authenticateFirebaseToken } = require("../../middleware/firebaseAuthMiddleware");
 const adminOnly = require("../../middleware/authenticateAdmin");
 
 const router = express.Router();
 
-// ✅ Multer Configuration (Secure File Upload)
+// ✅ Multer configuration
 const storage = multer.diskStorage({
   destination: "./uploads/",
   filename: (req, file, cb) => {
-    cb(null, file.fieldname + "-" + Date.now() + path.extname(file.originalname));
+    const ext = path.extname(file.originalname);
+    const baseName = path.basename(file.originalname, ext);
+    cb(null, `${baseName}-${Date.now()}${ext}`);
   },
 });
 
-// ✅ Allow all image file types
 const fileFilter = (req, file, cb) => {
   if (file.mimetype.startsWith("image/")) {
     cb(null, true);
@@ -27,7 +30,7 @@ const fileFilter = (req, file, cb) => {
 
 const upload = multer({ storage, fileFilter });
 
-// ✅ Product Validation Middleware
+// ✅ Validation middleware
 const validateProduct = [
   body("name").trim().notEmpty().withMessage("Name is required"),
   body("price").isFloat({ gt: 0 }).withMessage("Price must be a positive number"),
@@ -42,25 +45,46 @@ const validateProduct = [
   },
 ];
 
-// ✅ Create Product (POST)
+// ✅ Create product
 router.post("/add", authenticateFirebaseToken, adminOnly, upload.single("image"), validateProduct, async (req, res) => {
   const { name, price, description, stock } = req.body;
-  const image_url = req.file ? `/uploads/${req.file.filename}` : "/uploads/default.png";
 
+  let image_url = "/uploads/default.png";
   try {
+    if (req.file) {
+      const webpFilename = req.file.filename.split(".")[0] + ".webp";
+      const webpPath = `uploads/${webpFilename}`;
+
+      await sharp(req.file.path).webp({ quality: 80 }).toFile(webpPath);
+      fs.unlinkSync(req.file.path); // Remove original
+
+      image_url = "/" + webpPath;
+    }
+
     const [result] = await db.execute(
       "INSERT INTO products (name, price, description, image_url, stock) VALUES (?, ?, ?, ?, ?)",
       [name, price, description, image_url, stock]
     );
-    res.status(201).json({ product_id: result.insertId, result });
+
+    res.status(201).json({ product_id: result.insertId });
   } catch (err) {
-    console.error("Database error:", err);
-    res.status(500).json({ error: "Failed to insert product" });
+    console.error("Upload error:", err);
+    res.status(500).json({ error: "Failed to create product" });
   }
 });
 
-// ✅ Get All Products (GET)
+// ✅ Get all products
 router.get("/", async (req, res) => {
+  try {
+    const [rows] = await db.execute("SELECT * FROM products WHERE isdeleted = 0");
+    res.json(rows);
+  } catch (err) {
+    console.error("Database error:", err);
+    res.status(500).json({ error: "Database connection failed" });
+  }
+});
+
+router.get("/dashboard_fetch", authenticateFirebaseToken, adminOnly, async (req, res) => {
   try {
     const [rows] = await db.execute("SELECT * FROM products");
     res.json(rows);
@@ -70,20 +94,35 @@ router.get("/", async (req, res) => {
   }
 });
 
-// ✅ Update Product (PUT)
+// ✅ Update product
 router.put("/:product_id", authenticateFirebaseToken, adminOnly, upload.single("image"), validateProduct, async (req, res) => {
   const { product_id } = req.params;
   const { name, price, description, stock } = req.body;
-  const image_url = req.file ? `/uploads/${req.file.filename}` : null; // Only update if a new image is uploaded
 
   try {
-    // Check if the product exists
     const [existingProduct] = await db.execute("SELECT * FROM products WHERE product_id = ?", [product_id]);
     if (existingProduct.length === 0) {
       return res.status(404).json({ error: "Product not found" });
     }
 
-    // Build update query dynamically
+    let image_url = existingProduct[0].image_url;
+
+    if (req.file) {
+      const webpFilename = req.file.filename.split(".")[0] + ".webp";
+      const webpPath = `uploads/${webpFilename}`;
+
+      await sharp(req.file.path).webp({ quality: 80 }).toFile(webpPath);
+      fs.unlinkSync(req.file.path); // Remove original
+
+      // Delete old image if not default
+      if (image_url && image_url !== "/uploads/default.png") {
+        const oldPath = path.join(__dirname, "..", "..", image_url);
+        if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+      }
+
+      image_url = "/" + webpPath;
+    }
+
     const updateFields = [];
     const values = [];
 
@@ -97,26 +136,35 @@ router.put("/:product_id", authenticateFirebaseToken, adminOnly, upload.single("
       return res.status(400).json({ error: "No fields to update" });
     }
 
-    values.push(product_id); // Add ID at the end for the WHERE clause
-
-    // Execute update query
+    values.push(product_id);
     const query = `UPDATE products SET ${updateFields.join(", ")} WHERE product_id = ?`;
     await db.execute(query, values);
 
     res.json({ message: "Product updated successfully" });
   } catch (err) {
-    console.error("Database error:", err);
+    console.error("Update error:", err);
     res.status(500).json({ error: "Failed to update product" });
   }
 });
 
-// ✅ Delete Product (DELETE)
-router.delete("/:product_id", authenticateFirebaseToken, adminOnly, async (req, res) => {
+// ✅ Delete product
+router.put("/:product_id/delete", authenticateFirebaseToken, adminOnly, async (req, res) => {
   try {
-    const [result] = await db.execute("DELETE FROM products WHERE product_id = ?", [req.params.product_id]);
-    if (result.affectedRows === 0) return res.status(404).json({ message: "Product not found" });
+    const [result] = await db.query("UPDATE products SET isdeleted = 1 WHERE product_id = ?", [req.params.product_id]);
     res.json({ message: "Product deleted successfully" });
   } catch (err) {
+    console.error("Delete error:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT /api/products/:id/restore
+router.put("/:product_id/restore", authenticateFirebaseToken, adminOnly, async (req, res) => {
+  try {
+    await db.query("UPDATE products SET isdeleted = 0 WHERE product_id = ?", [req.params.product_id]);
+    res.json({ message: "Product restored successfully" });
+  } catch (err) {
+    console.error("Restore error:", err);
     res.status(500).json({ error: err.message });
   }
 });

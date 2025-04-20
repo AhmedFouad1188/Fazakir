@@ -52,27 +52,14 @@ router.post("/add", authenticateFirebaseToken, async (req, res) => {
 
     const orderId = orderResult.insertId;
 
-    const productDetails = [];
-
     for (const item of products) {
       await connection.execute(
-        `INSERT INTO order_items (order_id, product_id, quantity, price) VALUES (?, ?, ?, ?)`,
-        [orderId, item.product_id, item.quantity, item.price]
+        `INSERT INTO order_items (order_id, product_id, name, description, image_url, quantity, price) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [orderId, item.product_id, item.name, item.description, item.image_url, item.quantity, item.price]
       );
-
-      const [result] = await connection.execute(
-        `SELECT * FROM products WHERE product_id = ?`, [item.product_id]);
-
-        if (result.length > 0) {
-          productDetails.push({
-            ...result[0],
-            quantity: item.quantity,
-            price: item.price
-          });
-        }
     }
 
-    await sendOrderPlacedEmail(shipping_details, payment_method, productDetails, total_price, orderId);
+    await sendOrderPlacedEmail(shipping_details, payment_method, products, total_price, orderId);
 
     await connection.commit();
 
@@ -174,21 +161,6 @@ router.put("/:orderId/cancel", authenticateFirebaseToken, async (req, res) => {
   const { orderId } = req.params;
 
   try {
-    const [orderRows] = await db.execute(
-      `SELECT * FROM orders WHERE id = ? AND firebase_uid = ?`,
-      [orderId, firebaseUID]
-    );
-
-    if (!orderRows.length) {
-      return res.status(404).json({ message: "Order not found" });
-    }
-
-    const order = orderRows[0];
-
-    if (order.status === "cancelled") {
-      return res.status(400).json({ message: "Order already cancelled" });
-    }
-
     await db.execute(
       `UPDATE orders SET status = 'cancelled' WHERE id = ? AND firebase_uid = ?`,
       [orderId, firebaseUID]
@@ -235,7 +207,7 @@ router.put("/:orderId/orderAgain", authenticateFirebaseToken, async (req, res) =
 
 router.get("/fetchAllOrders", authenticateFirebaseToken, adminOnly, async (req, res) => {
   try {
-    const [orders] = await db.execute(`SELECT * FROM orders`);
+    const [orders] = await db.execute(`SELECT * FROM orders ORDER BY id DESC`);
 
     for (const order of orders) {
       const [items] = await db.execute(
@@ -253,6 +225,27 @@ router.get("/fetchAllOrders", authenticateFirebaseToken, adminOnly, async (req, 
   } catch (error) {
     console.error("Error fetching orders:", error);
     res.status(500).json({ message: "Error fetching orders" });
+  }
+});
+
+router.put('/updateStatus/:orderId', authenticateFirebaseToken, adminOnly, async (req, res) => {
+  const { orderId } = req.params;
+  const { status } = req.body;
+  try {
+    await db.execute("UPDATE orders SET status = ? WHERE id = ?", [status, orderId]);
+    res.send({ message: "Status updated" });
+  } catch (err) {
+    res.status(500).send({ error: "Failed to update status" });
+  }
+});
+
+router.put('/cancel/:orderId', async (req, res) => {
+  const { orderId } = req.params;
+  try {
+    await db.execute("UPDATE orders SET status = 'cancelled' WHERE id = ?", [orderId]);
+    res.send({ message: "Order cancelled" });
+  } catch (err) {
+    res.status(500).send({ error: "Failed to cancel order" });
   }
 });
 

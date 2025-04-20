@@ -51,12 +51,15 @@ const Checkout = () => {
       payment_method: "Cash on Delivery",
       products: cartItems.map((item) => ({
         product_id: item.product_id,
+        name: item.name,
+        description: item.description,
+        image_url: item.image_url,
         quantity: item.quantity,
         price: item.price,
       })),
       total_price: totalPrice,
     };
-
+    
     dispatch(submitOrder(orderData));
   };
 

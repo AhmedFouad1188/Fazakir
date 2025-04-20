@@ -12,6 +12,7 @@ router.get("/", authenticateFirebaseToken, async (req, res) => {
                 c.product_id,
                 p.name AS name,
                 p.price AS price,
+                p.description AS description,
                 p.image_url AS image_url,
                 c.quantity
             FROM

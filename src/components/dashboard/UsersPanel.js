@@ -7,6 +7,7 @@ const UsersPanel = () => {
   const [orders, setOrders] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
+  const [expandedUserId, setExpandedUserId] = useState(null);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -37,6 +38,10 @@ const UsersPanel = () => {
 
   }, []);
 
+  const toggleUser = (userId) => {
+    setExpandedUserId((prevId) => (prevId === userId ? null : userId));
+  };
+
   if (loading) return <p>Loading users...</p>;
 
   return (
@@ -56,19 +61,9 @@ const UsersPanel = () => {
         <table border="1">
           <thead>
             <tr>
-              <th>First name</th>
-              <th>Last name</th>
+              <th>Name</th>
               <th>Country</th>
-              <th>Dial code</th>
               <th>Mobile</th>
-              <th>Email</th>
-              <th>Governorate</th>
-              <th>District</th>
-              <th>Street</th>
-              <th>Building</th>
-              <th>Floor</th>
-              <th>Apartment</th>
-              <th>Landmark</th>
               <th>Created at</th>
               <th>Status</th>
               <th>Deleted at</th>
@@ -81,7 +76,7 @@ const UsersPanel = () => {
           <tbody>
           {users
             .filter((u) =>
-              `${u.firstname} ${u.lastname} ${u.email} ${u.dial_code}${u.mobile}`
+              `${u.firstname} ${u.lastname} ${u.email} ${u.dial_code}${u.mobile} ${u.isdeleted ? "Deleted" : "Active"}`
                 .toLowerCase()
                 .includes(searchTerm.toLowerCase())
             )
@@ -90,31 +85,52 @@ const UsersPanel = () => {
               const userOrderPlaced = orders.filter(order => order.firebase_uid === u.firebase_uid && order.status === "placed").length;
               const userOrderDelivered = orders.filter(order => order.firebase_uid === u.firebase_uid && order.status === "delivered").length;
               const userOrderCancelled = orders.filter(order => order.firebase_uid === u.firebase_uid && order.status === "cancelled").length;
+          
               return (
-              <tr key={u.firebase_uid}>
-                <td>{u.firstname}</td>
-                <td>{u.lastname}</td>
-                <td>{u.country}</td>
-                <td>{u.dial_code}</td>
-                <td>{u.mobile}</td>
-                <td>{u.email }</td>
-                <td>{u.governorate}</td>
-                <td>{u.district}</td>
-                <td>{u.street}</td>
-                <td>{u.building}</td>
-                <td>{u.floor}</td>
-                <td>{u.apartment}</td>
-                <td>{u.landmark}</td>
-                <td>{u.created_at}</td>
-                <td style={{ color: u.isdeleted ? "red" : "green" }}>
-                  {u.isdeleted ? "Deleted" : "Active"}
-                </td>
-                <td>{u.deleted_at}</td>
-                <td>{userOrderCount}</td>
-                <td>{userOrderPlaced}</td>
-                <td>{userOrderDelivered}</td>
-                <td>{userOrderCancelled}</td>
-              </tr>
+                <React.Fragment key={u.firebase_uid}>
+                  <tr 
+                    onClick={() => toggleUser(u.firebase_uid)}
+                    style={{ cursor: "pointer", backgroundColor: expandedUserId === u.firebase_uid ? "#f9f9f9" : "white" }}
+                  >
+                    <td>{u.firstname} {u.lastname}</td>
+                    <td>{u.country}</td>
+                    <td>{u.dial_code} {u.mobile}</td>
+                    <td>{u.created_at}</td>
+                    <td style={{ color: u.isdeleted ? "red" : "green" }}>
+                      {u.isdeleted ? "Deleted" : "Active"}
+                    </td>
+                    <td>{u.deleted_at}</td>
+                    <td>{userOrderCount}</td>
+                    <td>{userOrderPlaced}</td>
+                    <td>{userOrderDelivered}</td>
+                    <td>{userOrderCancelled}</td>
+                  </tr>
+          
+                  {expandedUserId === u.firebase_uid && (
+                    <tr>
+                      <td colSpan="10">
+                        <table border="1" style={{ width: "100%", marginTop: "10px" }}>
+                          <thead>
+                            <tr>
+                              <th>Email</th>
+                              <th>Governorate</th>
+                              <th>Address</th>
+                              <th>Landmark</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr>
+                              <td>{u.email}</td>
+                              <td>{u.governorate}</td>
+                              <td>{u.building} {u.street}, {u.district}, Floor: {u.floor}, Apt: {u.apartment}</td>
+                              <td>{u.landmark}</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
               );
             })}
           </tbody>

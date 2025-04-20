@@ -65,6 +65,16 @@ const Orders = () => {
               </button>
             </>
           )}
+          {order.payment_method === "Cash on Delivery" && order.status === "preparing" && (
+            <>
+              <button
+                onClick={() => handleCancel(order)}
+                className="ml-2 mt-2 bg-red-600 text-white px-4 py-1 rounded"
+              >
+                Cancel
+              </button>
+            </>
+          )}
           {order.payment_method === "Cash on Delivery" && order.status === "cancelled" && (
             <>
               <button onClick={() => handleOrderAgain(order)}>Order Again</button>

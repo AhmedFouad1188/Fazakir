@@ -232,7 +232,7 @@ router.post('/recover-account', async (req, res) => {
 
 router.get("/fetchUsers", authenticateFirebaseToken, adminOnly, async (req, res) => {
   try {
-    const [results] = await db.execute("SELECT * FROM users");
+    const [results] = await db.execute("SELECT * FROM users ORDER BY id DESC");
 
     res.json(results);
   } catch (error) {
