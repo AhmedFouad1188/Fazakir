@@ -4,7 +4,6 @@ import { useDispatch, useSelector } from "react-redux";
 import { checkAuthState } from "./redux/authSlice";
 import { fetchCart } from "./redux/cartSlice";
 import Home from "./pages/Home";
-import Shop from "./pages/Shop";
 import CartPage from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import ThankYou from "./pages/thankyou";
@@ -18,7 +17,6 @@ import RecoverAccount from "./pages/recover-account";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import ProtectedRoute from "./components/ProtectedRoute";
-import { CartProvider } from "./context/CartContext";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "./styles.css";
@@ -40,12 +38,11 @@ function App() {
   }, [user, dispatch]);
 
   return (
-    <CartProvider> {/* Wrap everything with CartProvider */}
+    <>
       <ToastContainer />
       <Navbar />
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/shop" element={<Shop />} />
         
         {/* ✅ Protected Routes */}
         <Route element={<ProtectedRoute />}>
@@ -53,7 +50,7 @@ function App() {
           <Route path="/cart" element={<CartPage />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/thankyou" element={<ThankYou />} />
-          <Route path="/Orders" element={<Orders />} />
+          <Route path="/orders" element={<Orders />} />
         </Route>
 
         {/* ✅ Admin Dashboard (Protected) */}
@@ -67,7 +64,7 @@ function App() {
         <Route path="/recover-account" element={<RecoverAccount />} />
       </Routes>
       <Footer />
-    </CartProvider>
+      </>
   );
 }
 

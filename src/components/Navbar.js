@@ -29,9 +29,7 @@ const Navbar = () => {
 
       {/* Navigation Links */}
       <div style={{ display: "flex", gap: "20px", alignItems: "center" }}>
-        <Link to="/shop" style={{ color: "#fff", textDecoration: "none" }}>Shop</Link>
 
-        {/* Cart Link with Badge */}
         <Cart /> {/* ✅ Show cart icon with count */}
 
         {user ? (

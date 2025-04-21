@@ -1,14 +1,16 @@
-import { useNavigate } from "react-router-dom";
+import ProductList from "../components/ProductList";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css"; // Import styles
 import "./home.css"
 
 const Home = () => {
-  const navigate = useNavigate();
 
   return (
-    <div className="title">
+    <div>
       <h1>فذكر</h1>
       <h2>كانفاس ينبض بالايمان</h2>
-      <button onClick={() => navigate("/login")}>Login</button> {/* ✅ Redirect to Login Page */}
+      <ToastContainer />
+      <ProductList />
     </div>
   );
 };
