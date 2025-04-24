@@ -19,7 +19,6 @@ import Footer from "./components/Footer";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import "./styles.css";
 
 function App() {
   const dispatch = useDispatch();

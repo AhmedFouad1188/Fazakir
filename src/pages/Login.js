@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { login, googleLogin } from "../redux/authSlice";
-import "./login.css";
+import styles from "../styles/login.module.css";
 import { FcGoogle } from "react-icons/fc";
 
 const Login = () => {

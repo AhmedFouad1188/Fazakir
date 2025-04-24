@@ -1,0 +1,126 @@
+@font-face {
+  font-family: 'expoarabic';
+  src: url('../assets/fonts/Expo_Arabic_Light.ttf') format('truetype');
+}
+
+.custom-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+  }
+  
+  .custom-modal {
+    background: #fff;
+    padding: 2rem;
+    border-radius: 10px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  
+  .actions {
+    margin-top: 1.5rem;
+    text-align: right;
+  }
+  
+  .actions button {
+    margin-left: 0.5rem;
+    padding: 0.5rem 1rem;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+  }
+  
+  .actions button:first-child {
+    background-color: #ccc;
+  }
+  
+  .actions button:last-child {
+    background-color: #28a745;
+    color: #fff;
+  }
+
+  .spinner {
+    animation: spin 1s linear infinite;
+  }
+  @keyframes spin {
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+
+* {
+  font-family: 'expoarabic', sans-serif;
+  font-weight: 100;
+  user-select: none;
+  direction: rtl;
+}
+
+body {
+  font-size: 2vw;
+  color: #a38483;
+  text-align: center;
+  overflow-x: hidden;
+  padding: 0;
+  margin: 0;
+}
+
+h2 {
+  font-weight: 600;
+}
+
+h3 {
+  font-weight: 600;
+}
+
+label {
+    font-weight: 600;
+    font-size: 1.2rem;
+}
+
+input, textarea, select {
+  font-size: 1rem;
+  color: white;
+  text-align: right;
+  background-color: #a38483;
+  border: none;
+  border-color: #e7c9b7;
+  border-style: solid;
+  border-radius: 3vw;
+  padding: 0.5vw 1vw;
+  width: 30vw;
+}
+
+input::placeholder, textarea::placeholder {
+  color: white;
+}
+
+select {
+  width: 32.4vw;
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  box-shadow: 0 0 0.5vw 0.1vw #e7c9b7;
+}
+
+.price {
+  font-weight: 600;
+}
+
+button {
+    font-size: 1.3rem;
+    font-weight: 600;
+    background-color: #e7c9b7;
+    color: white;
+    border: none;
+    border-radius: 3vw;
+    cursor: pointer;
+    padding: 1vw 0;
+}

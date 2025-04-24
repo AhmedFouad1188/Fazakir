@@ -9,8 +9,8 @@ const ProductsPanel = () => {
     name: "",
     price: "",
     description: "",
-    stock: "",
     image_url: "",
+    category: "",
   });
   const [imageFile, setImageFile] = useState(null);
   const [preview, setPreview] = useState(null);
@@ -61,7 +61,7 @@ const ProductsPanel = () => {
     formData.append("name", product.name);
     formData.append("price", product.price);
     formData.append("description", product.description);
-    formData.append("stock", product.stock);
+    formData.append("category", product.category);
     if (imageFile) {
       formData.append("image", imageFile);
     }
@@ -82,7 +82,7 @@ const ProductsPanel = () => {
       };
 
       // ✅ Reset form after submission
-      setProduct({ name: "", price: "", description: "", stock: "", image_url: "" });
+      setProduct({ name: "", price: "", description: "", category: "", image_url: "" });
       setImageFile(null);
       setPreview(null);
       setEditingProductId(null);
@@ -102,7 +102,7 @@ const ProductsPanel = () => {
       name: product.name,
       price: product.price,
       description: product.description,
-      stock: product.stock,
+      category: product.category,
       image_url: product.image_url,
     });
     setPreview(product.image_url ? `http://localhost:5000${product.image_url}` : null);
@@ -141,7 +141,12 @@ const ProductsPanel = () => {
         <input type="text" name="name" placeholder="Product Name" value={product.name} onChange={handleChange} required />
         <input type="number" name="price" placeholder="Price" value={product.price} onChange={handleChange} required />
         <input type="text" name="description" placeholder="Description" value={product.description} onChange={handleChange} required />
-        <input type="number" name="stock" placeholder="Stock" value={product.stock} onChange={handleChange} required />
+        <select name="category" value={product.category} onChange={handleChange} required>
+          <option>Select Category ...</option>
+          <option>Quran</option>
+          <option>Modern</option>
+          <option>Kids</option>
+        </select>
         <input type="file" id="fileInput" name="image" accept="image/*" onChange={handleImageChange} />
         {preview && <img src={preview} alt="Preview" width="100" />}
         <button type="submit" disabled={submitting}>
@@ -178,7 +183,7 @@ const ProductsPanel = () => {
               <th>Name</th>
               <th>Price</th>
               <th>Description</th>
-              <th>Stock</th>
+              <th>Category</th>
               <th>Image</th>
               <th>Actions</th>
             </tr>
@@ -196,7 +201,7 @@ const ProductsPanel = () => {
                   <td>{product.name}</td>
                   <td>${product.price}</td>
                   <td>{product.description}</td>
-                  <td>{product.stock}</td>
+                  <td>{product.category}</td>
                   <td>
                     {product.image_url && <img src={`http://localhost:5000${product.image_url}`} alt={product.name} width="50" />}
                   </td>

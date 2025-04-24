@@ -2,6 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../redux/authSlice";
 import Cart from "../components/Cart"; // ✅ Import Cart component
+import logo from '../assets/logo.png';
 
 const Navbar = () => {
   const user = useSelector((state) => state.auth.user);
@@ -16,28 +17,26 @@ const Navbar = () => {
   return (
     <nav style={{ 
       display: "flex", 
+      flexDirection: "row-reverse",
       justifyContent: "space-between", 
       alignItems: "center", 
       padding: "15px 20px", 
-      background: "#333", 
-      color: "#fff" 
     }}>
-      {/* Logo/Home Link */}
-      <Link to="/" style={{ color: "#fff", textDecoration: "none", fontSize: "22px", fontWeight: "bold" }}>
-        🛍️ فذكر
+      <Link to="/">
+        <img src={logo} alt="Fazakir Logo" style={{width: "13vw", marginLeft: "-0.5vw"}} />
       </Link>
 
       {/* Navigation Links */}
-      <div style={{ display: "flex", gap: "20px", alignItems: "center" }}>
+      <div style={{ display: "flex", flexDirection: "row-reverse", gap: "2vw", alignItems: "center", marginBottom: "13vw", marginRight: "2vw", fontWeight: "600" }}>
 
         <Cart /> {/* ✅ Show cart icon with count */}
 
         {user ? (
           <>
-            <Link to="/orders" style={{ color: "#fff", textDecoration: "none" }}>Orders</Link>
-            <Link to="/account" style={{ color: "#fff", textDecoration: "none" }}>Account</Link>
+            <Link to="/orders" style={{ color: "#a38483", textDecoration: "none" }}>الطلبـــات</Link>
+            <Link to="/account" style={{ color: "#a38483", textDecoration: "none" }}>الحســـاب</Link>
             {user.is_admin && (
-              <Link to="/admin" style={{ color: "#fff", textDecoration: "none" }}>Dashboard</Link>
+              <Link to="/admin" style={{ color: "#a38483", textDecoration: "none" }}>لوحة تحكم الأدمن</Link>
             )}
             <button 
               onClick={handleLogout} 
@@ -49,11 +48,11 @@ const Navbar = () => {
                 cursor: "pointer", 
                 borderRadius: "5px" 
               }}>
-              Logout
+              الـخـــروج
             </button>
           </>
         ) : (
-          <Link to="/login" style={{ color: "#fff", textDecoration: "none" }}>Login</Link>
+          <Link to="/login" style={{ color: "#a38483", textDecoration: "none" }}>تسجيل الدخول</Link>
         )}
       </div>
     </nav>

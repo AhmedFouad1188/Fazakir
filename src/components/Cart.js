@@ -8,8 +8,8 @@ const Cart = () => {
 
   return (
     <div style={{ position: "relative", padding: "10px" }}>
-      <Link to="/cart" style={{ textDecoration: "none", color: "white", fontWeight: "bold" }}>
-        🛒 Cart ({totalQuantity}) {/* ✅ Display cart count safely */}
+      <Link to="/cart" style={{ textDecoration: "none", color: "#a38483" }}>
+        🛒 {totalQuantity} {/* ✅ Display cart count safely */}
       </Link>
     </div>
   );

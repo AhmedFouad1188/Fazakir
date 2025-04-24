@@ -1,0 +1,102 @@
+@font-face {
+    font-family: 'farsi';
+    src: url('../assets/fonts/Farsi_Simple_Bold.ttf') format('truetype');
+}
+
+.hero {
+    width: 98.1vw;
+    margin-top: -13vw;
+    border-radius: 50vw 0 0 0;
+}
+
+.productnav {
+    float: right;
+    margin: 5vw 1vw 0 0;
+}
+
+span {
+    margin: 1vw;
+    font-size: 1.5rem;
+    color: #ffffff;
+    background-color: #e7c9b7;
+    padding: 1vw 2vw;
+    border-radius: 10vw;
+    cursor: pointer;
+}
+
+.all {
+    padding: 1.5vw 4vw;
+    background-color: #a38483;
+    font-size: 1.9rem;
+    margin-left: 3vw;
+}
+
+.introtitle {
+    font-family: "farsi";
+    font-size: 7vw;
+    color: #e7c9b7;
+    margin: 3vw 0 0 0;
+}
+
+.introbody {
+    width: 60vw;
+    margin: auto;
+    line-height: 3vw;
+    position: relative;
+}
+
+.introbody p {
+    position: relative;
+    z-index: 2;
+}
+
+.introbody img {
+    width: 40vw;
+    position: absolute;
+    top: -5vw;
+    right: 50vw;
+    opacity: 0.6;
+}
+
+.faq {
+    display: flex;
+    flex-direction: column;
+    margin-top: 7vw;
+}
+
+.faq .all {
+    text-align: center;
+    width: 20vw;
+}
+
+.faq span {
+    width: 60vw;
+    text-align: right;
+}
+
+.special {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    margin-top: 10vw;
+    background-color: #a38483;
+    padding: 4vw 0;
+}
+
+.special span {
+    transform: rotate(-90deg);
+    font-size: 4vw;
+    text-align: right;
+    padding: 3vw 7vw;
+    width: 30vw;
+    font-weight: 600;
+    color: #a38483;
+    margin: -10vw;
+    cursor: default;
+}
+
+.special form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5vw;
+}

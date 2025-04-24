@@ -4,6 +4,7 @@ import { addToCart } from "../redux/cartSlice";
 import axios from "axios";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import styles from "../styles/productlist.module.css";
 
 const ProductList = () => {
   const [products, setProducts] = useState([]);
@@ -35,20 +36,6 @@ const ProductList = () => {
     fetchProducts();
   }, []);
 
-  const handleIncrease = (product_id) => {
-    setQuantities((prev) => ({
-      ...prev,
-      [product_id]: prev[product_id] + 1,
-    }));
-  };
-
-  const handleDecrease = (product_id) => {
-    setQuantities((prev) => ({
-      ...prev,
-      [product_id]: prev[product_id] > 1 ? prev[product_id] - 1 : 1,
-    }));
-  };
-
   const handleAddToCart = async (product) => {
     if (!user) {
       toast.error("You must be logged in to add items to the cart.");
@@ -74,61 +61,29 @@ const ProductList = () => {
   };
 
   return (
-    <div style={{ textAlign: "center", padding: "20px" }}>
-      <h2>Product List</h2>
+    <div className={styles.container}>
+      <h2>الأكــــثر مبيــــعاً</h2>
 
       {loading && <p>Loading products...</p>}
       {error && <p style={{ color: "red" }}>{error}</p>}
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-          gap: "20px",
-          marginTop: "20px",
-        }}
-      >
+      <div className={styles.prodcont}>
         {products.length > 0 ? (
           products.map((product) => (
             <div
               key={product.product_id}
-              style={{
-                border: "1px solid #ddd",
-                borderRadius: "8px",
-                padding: "10px",
-                textAlign: "center",
-              }}
+              className={styles.product}
             >
               <img
                 src={product.image_url?.startsWith("http") ? product.image_url : `http://localhost:5000${product.image_url}`} // ✅ Fix Image URL
                 alt={product.name}
-                className="product-image"
-                style={{ width: "15vw" }}
               />
+              <div>
               <h3>{product.name}</h3>
               <p>{product.description}</p>
-              <strong>${product.price}</strong>
-
-              <div style={{ display: "flex", justifyContent: "center", alignItems: "center", marginTop: "10px" }}>
-                <button onClick={() => handleDecrease(product.product_id)} style={{ padding: "5px 10px", margin: "0 5px" }}>-</button>
-                <span>{quantities[product.product_id]}</span>
-                <button onClick={() => handleIncrease(product.product_id)} style={{ padding: "5px 10px", margin: "0 5px" }}>+</button>
+              <p className="price">${product.price}</p>
+              <button onClick={() => handleAddToCart(product)}>أضف إلى السلة</button>
               </div>
-
-              <button
-                onClick={() => handleAddToCart(product)}
-                style={{
-                  marginTop: "10px",
-                  padding: "8px 15px",
-                  background: "green",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "5px",
-                  cursor: "pointer",
-                }}
-              >
-                Add to Cart
-              </button>
             </div>
           ))
         ) : (

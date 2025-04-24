@@ -1,16 +1,17 @@
 const Footer = () => {
     return (
       <footer style={styles.footer}>
-        <p>&copy; {new Date().getFullYear()} Fazakir. All rights reserved.</p>
+        <div>
+          <h1>تواصلوا معنا</h1>
+        </div>
+        <p>&copy; فــذكــر. جميع الحقوق محفوظة {new Date().getFullYear()}</p>
       </footer>
     );
   };
   
   const styles = {
     footer: {
-      textAlign: "center",
-      backgroundColor: "white",
-      width: "100%",
+      marginTop: "5vw"
     },
   };
   

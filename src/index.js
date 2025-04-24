@@ -5,6 +5,7 @@ import { BrowserRouter } from "react-router-dom";
 import store from "./redux/store";
 import App from "./App";
 import axios from "axios";
+import './styles/global.css'
 
 axios.defaults.withCredentials = true; // Ensure cookies are sent with requests
 
