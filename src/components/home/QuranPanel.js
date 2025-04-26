@@ -9,7 +9,6 @@ import styles from "../../styles/productlist.module.css";
 const QuranPanel = () => {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [quantities, setQuantities] = useState({});
     const user = useSelector((state) => state.auth.user); // ✅ Get logged-in user
     const dispatch = useDispatch();
 
@@ -21,8 +20,8 @@ const QuranPanel = () => {
             console.log("No products available.");
           }
         setProducts(res.data);
-      } catch (err) {
-        err("Failed to load products");
+      } catch (error) {
+        toast.error("Failed to load products");
       } finally {
         setLoading(false);
       }
@@ -40,11 +39,10 @@ const QuranPanel = () => {
     
         const cartItem = { 
           productId: product.product_id, 
-          quantity: quantities[product.product_id] 
         };
         
         try {
-          dispatch(addToCart(cartItem)); // ✅ Update Redux store
+          await dispatch(addToCart(cartItem)).unwrap();
     
           toast.success(`${product.name} added to cart!`, {
             position: "top-right",
@@ -61,9 +59,7 @@ const QuranPanel = () => {
     return (
         <div className={styles.container}>
               <h2>لوحات آيات قرآنية</h2>
-        
-              {loading && <p>Loading products...</p>}
-        
+                
               <div className={styles.prodcont}>
                 {products.length > 0 ? (
                   products.map((product) => (

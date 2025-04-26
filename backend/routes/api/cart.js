@@ -31,8 +31,9 @@ router.get("/", authenticateFirebaseToken, async (req, res) => {
 // ✅ Add item to cart
 router.post("/add", authenticateFirebaseToken, async (req, res) => {
   try {
-    const { productId, quantity } = req.body;
+    const { productId } = req.body;
     const firebaseUID = req.user.firebase_uid;
+    const quantity = 1;
 
     const sql = `
       INSERT INTO cart (firebase_uid, product_id, quantity)

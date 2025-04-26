@@ -23,11 +23,11 @@ const Navbar = () => {
       padding: "15px 20px", 
     }}>
       <Link to="/">
-        <img src={logo} alt="Fazakir Logo" style={{width: "13vw", marginLeft: "-0.5vw"}} />
+        <img src={logo} alt="Fazakir Logo" style={{width: "11vw", marginLeft: "1vw"}} />
       </Link>
 
       {/* Navigation Links */}
-      <div style={{ display: "flex", flexDirection: "row-reverse", gap: "2vw", alignItems: "center", marginBottom: "13vw", marginRight: "2vw", fontWeight: "600" }}>
+      <div style={{ display: "flex", flexDirection: "row-reverse", gap: "2vw", alignItems: "center", marginBottom: "11vw", marginRight: "2vw", fontWeight: "600" }}>
 
         <Cart /> {/* ✅ Show cart icon with count */}
 

@@ -101,6 +101,39 @@ router.get("/", async (req, res) => {
   }
 });
 
+router.get("/bestselling", async (req, res) => {
+  try {
+    const [rows] = await db.execute(
+      `SELECT 
+           p.product_id,
+           p.name,
+           p.price,
+           p.description,
+           p.image_url,
+           SUM(oi.quantity) AS total_sold
+       FROM 
+           orders o
+       JOIN 
+           order_items oi ON o.id = oi.order_id
+       JOIN 
+           products p ON oi.product_id = p.product_id
+       WHERE 
+           o.status = 'delivered' AND
+           p.isdeleted = 0
+       GROUP BY 
+           p.product_id
+       ORDER BY 
+           total_sold DESC
+       LIMIT 5;
+      `);
+
+    res.json(rows);
+  } catch (err) {
+    console.error("Database error:", err);
+    res.status(500).json({ error: "Database connection failed" });
+  }
+});
+
 router.get("/dashboard_fetch", authenticateFirebaseToken, adminOnly, async (req, res) => {
   try {
     const [rows] = await db.execute("SELECT * FROM products");

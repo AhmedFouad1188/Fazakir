@@ -10,7 +10,6 @@ const ProductList = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [quantities, setQuantities] = useState({});
   const user = useSelector((state) => state.auth.user); // ✅ Get logged-in user
   const dispatch = useDispatch();
 
@@ -20,11 +19,6 @@ const ProductList = () => {
         const response = await axios.get("http://localhost:5000/api/products");
         setProducts(response.data);
 
-        const initialQuantities = response.data.reduce((acc, product) => {
-          acc[product.product_id] = 1;
-          return acc;
-        }, {});
-        setQuantities(initialQuantities);
       } catch (error) {
         console.error("Product Fetch Error:", error.response || error.message);
         setError("Failed to load products.");
@@ -44,7 +38,6 @@ const ProductList = () => {
 
     const cartItem = { 
       productId: product.product_id, 
-      quantity: quantities[product.product_id] 
     };
     
     try {

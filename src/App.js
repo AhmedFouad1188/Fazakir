@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { checkAuthState } from "./redux/authSlice";
 import { fetchCart } from "./redux/cartSlice";
 import Home from "./pages/Home";
+import Products from "./pages/products";
 import CartPage from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import ThankYou from "./pages/thankyou";
@@ -42,6 +43,7 @@ function App() {
       <Navbar />
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/products" element={<Products />} />
         
         {/* ✅ Protected Routes */}
         <Route element={<ProtectedRoute />}>

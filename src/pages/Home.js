@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import ProductList from "../components/ProductList";
+import { useNavigate } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css"; // Import styles
 import styles from "../styles/home.module.css";
@@ -13,6 +13,7 @@ import KidsPanel from "../components/home/KidsPanel";
 
 const Home = () => {
   const [activeTab, setActiveTab] = useState("bestselling");
+  const navigate = useNavigate();
 
   const renderPanel = () => {
     switch (activeTab) {
@@ -30,13 +31,13 @@ const Home = () => {
   };
 
   return (
-    <div className={styles.container}>
+    <div>
       <ToastContainer />
 
       <img src={hero} alt="Hero Image" className={styles.hero} />
 
       <div className={styles.productnav}>
-        <span className={styles.all}>مـنـتـجـاتـنا</span>
+        <span onClick={() => navigate("/products")} className={styles.all}>مـنـتـجـاتـنا</span>
         <span onClick={() => setActiveTab("bestselling")}>الأكــثر مبيــعاً</span>
         <span onClick={() => setActiveTab("quran")}>لوحات آيات قرآنية</span>
         <span onClick={() => setActiveTab("modern")}>لوحات مـــــــودرن </span>
@@ -46,8 +47,6 @@ const Home = () => {
       <div>
         {renderPanel()}
       </div>
-
-      <ProductList />
 
       <p className={styles.introtitle}>فَـــذَكِّر إِنْ نَفَعَت الذِكْرَى</p>
 

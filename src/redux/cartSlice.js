@@ -13,9 +13,9 @@ export const fetchCart = createAsyncThunk("cart/fetchCart", async (_, { rejectWi
 });
 
 // Add item to cart
-export const addToCart = createAsyncThunk("cart/addToCart", async ({ productId, quantity }, { rejectWithValue }) => {
+export const addToCart = createAsyncThunk("cart/addToCart", async ({ productId }, { rejectWithValue }) => {
   try {
-      const response = await axios.post("http://localhost:5000/api/cart/add", { productId, quantity }, { withCredentials: true });
+      const response = await axios.post("http://localhost:5000/api/cart/add", { productId }, { withCredentials: true });
 
       return response.data; // Return the updated cart item
   } catch (error) {
@@ -87,16 +87,13 @@ const cartSlice = createSlice({
 
       .addCase(addToCart.fulfilled, (state, action) => {
         const newItem = action.payload;
-        const existingItemIndex = state.items.findIndex(item => item.product_id === newItem.product_id);
-      
-        if (existingItemIndex !== -1) {
-          // Update quantity if item exists
-          state.items[existingItemIndex].quantity = newItem.quantity;
+        const existingItem = state.items.find(item => item.product_id === newItem.product_id);
+        if (existingItem) {
+          existingItem.quantity = Number(newItem.quantity); // Overwrite quantity from DB
         } else {
-          // Add new item if not found
           state.items.push(newItem);
-        }      
-      
+        }
+
         // ✅ Always recalculate totals to avoid duplicates or over-counting
         state.totalQuantity = state.items.reduce((sum, item) => sum + item.quantity, 0);
         state.totalPrice = state.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
@@ -133,17 +130,19 @@ const cartSlice = createSlice({
       })
 
       .addCase(updateCartQuantity.fulfilled, (state, action) => {
-        const { product_id, quantity } = action.payload;
-        const existingItem = state.items.find(item => item.product_id === product_id);
-      
-        if (existingItem) {
-          existingItem.quantity = quantity;
+        const productId = action.payload.product_id || action.payload.productId;
+const newQuantity = Number(action.payload.quantity);
+const existingItem = state.items.find(item => item.product_id === productId);
+
+if (existingItem) {
+  existingItem.quantity = newQuantity;
+}
+
         
           // 🔁 Recalculate totals
           state.totalQuantity = state.items.reduce((sum, item) => sum + item.quantity, 0);
           state.totalPrice = state.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-        }        
-      })
+        })
 
       .addCase(updateCartQuantity.rejected, (state, action) => {
         state.error = action.payload || "Failed to update item quantity";

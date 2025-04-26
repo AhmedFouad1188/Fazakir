@@ -9,20 +9,19 @@ import styles from "../../styles/productlist.module.css";
 const BestsellingPanel = () => {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [quantities, setQuantities] = useState({});
     const user = useSelector((state) => state.auth.user); // ✅ Get logged-in user
     const dispatch = useDispatch();
 
     const fetchBestselling = async () => {
         setLoading(true);
       try {
-        const res = await axios.get("http://localhost:5000/api/products?category=bestselling", { withCredentials: true });  
+        const res = await axios.get("http://localhost:5000/api/products/bestselling", { withCredentials: true });
         if (res.data.length === 0) {
             console.log("No products available.");
           }
         setProducts(res.data);
-      } catch (err) {
-        err("Failed to load products");
+      } catch (error) {
+        toast.error("Failed to load products");
       } finally {
         setLoading(false);
       }
@@ -40,11 +39,10 @@ const BestsellingPanel = () => {
     
         const cartItem = { 
           productId: product.product_id, 
-          quantity: quantities[product.product_id] 
         };
         
         try {
-          dispatch(addToCart(cartItem)); // ✅ Update Redux store
+          await dispatch(addToCart(cartItem)).unwrap();
     
           toast.success(`${product.name} added to cart!`, {
             position: "top-right",
@@ -61,9 +59,7 @@ const BestsellingPanel = () => {
     return (
         <div className={styles.container}>
               <h2>الأكــــثر مبيــــعاً</h2>
-        
-              {loading && <p>Loading products...</p>}
-        
+                
               <div className={styles.prodcont}>
                 {products.length > 0 ? (
                   products.map((product) => (

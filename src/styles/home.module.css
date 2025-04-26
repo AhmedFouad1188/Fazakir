@@ -4,8 +4,8 @@
 }
 
 .hero {
-    width: 98.1vw;
-    margin-top: -13vw;
+    width: 100vw;
+    margin-top: -11vw;
     border-radius: 50vw 0 0 0;
 }
 
@@ -77,26 +77,28 @@ span {
 .special {
     display: flex;
     flex-direction: row;
-    align-items: center;
+    align-items: stretch;
     margin-top: 10vw;
     background-color: #a38483;
-    padding: 4vw 0;
 }
 
 .special span {
-    transform: rotate(-90deg);
     font-size: 4vw;
     text-align: right;
-    padding: 3vw 7vw;
-    width: 30vw;
+    padding: 3vw 5vw 3vw 15vw;
     font-weight: 600;
     color: #a38483;
-    margin: -10vw;
     cursor: default;
+    border-radius: 0 10vw 10vw 0;
+    align-self: flex-end;
+    transform: rotate(-90deg);
+    transform-origin: bottom left;
+    margin: 0 -32vw 0 17vw;
 }
 
 .special form {
     display: flex;
     flex-direction: column;
     gap: 1.5vw;
+    margin: 4vw 0;
 }
