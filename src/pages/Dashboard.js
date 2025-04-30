@@ -3,9 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
 
-import ProductsPanel from "../components/dashboard/ProductsPanel";
-import UsersPanel from "../components/dashboard/UsersPanel";
-import OrdersPanel from "../components/dashboard/OrdersPanel";
+import ProductsPanel from "../components/dashboard/productsPanel";
+import UsersPanel from "../components/dashboard/usersPanel";
+import OrdersPanel from "../components/dashboard/ordersPanel";
 
 const Dashboard = () => {
   const navigate = useNavigate();

@@ -1,16 +1,17 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import { addToCart } from "../../redux/cartSlice";
 import axios from "axios";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import styles from "../../styles/productlist.module.css";
 
 const KidsPanel = () => {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const user = useSelector((state) => state.auth.user); // ✅ Get logged-in user
     const dispatch = useDispatch();
+    const navigate = useNavigate();
 
     const fetchKids = async () => {
         setLoading(true);
@@ -57,28 +58,42 @@ const KidsPanel = () => {
     if (loading) return <p>Loading ...</p>;
 
     return (
-        <div className={styles.container}>
+        <div className="container">
               <h2>لوحات اطفال</h2>
                 
-              <div className={styles.prodcont}>
+              <div className="prodcont">
                 {products.length > 0 ? (
-                  products.map((product) => (
-                    <div
-                      key={product.product_id}
-                      className={styles.product}
-                    >
-                      <img
-                        src={product.image_url?.startsWith("http") ? product.image_url : `http://localhost:5000${product.image_url}`} // ✅ Fix Image URL
-                        alt={product.name}
-                      />
-                      <div>
-                      <h3>{product.name}</h3>
-                      <p>{product.description}</p>
-                      <p className="price">${product.price}</p>
-                      <button onClick={() => handleAddToCart(product)}>أضف إلى السلة</button>
+                  products.map((product) => {
+
+                    const image = Array.isArray(product.image_url) && product.image_url.length > 0 
+                      ? product.image_url[0] 
+                      : null;
+                    
+                    const imageUrl = image?.startsWith("http") 
+                      ? image 
+                      : image 
+                        ? `http://localhost:5000${image.startsWith("/") ? "" : "/"}${image}` 
+                        : "/placeholder.jpg";
+
+                    return (
+                      <div
+                        key={product.product_id}
+                        className="product"
+                        onClick={() => navigate(`/product/${product.product_id}`)}
+                      >
+                        <img
+                          src={imageUrl}
+                          alt={product.name}
+                        />
+                        <div>
+                        <h3>{product.name}</h3>
+                        <p>{product.description}</p>
+                        <p className="price">{product.price}</p>
+                        <button onClick={(e) => { e.stopPropagation(); handleAddToCart(product); }}>أضف إلى السلة</button>
+                        </div>
                       </div>
-                    </div>
-                  ))
+                    )
+                  })
                 ) : (
                   <p>No products found.</p>
                 )}

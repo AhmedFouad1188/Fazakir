@@ -9,23 +9,20 @@ const ProductsPanel = () => {
     name: "",
     price: "",
     description: "",
-    image_url: "",
     category: "",
   });
-  const [imageFile, setImageFile] = useState(null);
-  const [preview, setPreview] = useState(null);
+  const [imageFiles, setImageFiles] = useState([]);
+  const [previews, setPreviews] = useState([]);
   const [editingProductId, setEditingProductId] = useState(null);
+  const [existingImageUrls, setExistingImageUrls] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   const fetchProducts = async () => {
-      setLoading(true);
+    setLoading(true);
     try {
-      const res = await axios.get("http://localhost:5000/api/products/dashboard_fetch", { withCredentials: true });  
-      if (res.data.length === 0) {
-          console.log("No products available.");
-        }  
+      const res = await axios.get("http://localhost:5000/api/products/dashboard_fetch", { withCredentials: true });
       setProducts(res.data);
     } catch (err) {
       toast.error("Failed to load products");
@@ -38,21 +35,46 @@ const ProductsPanel = () => {
     fetchProducts();
   }, []);
 
-  // ✅ Handle form input changes
   const handleChange = (e) => {
     setProduct({ ...product, [e.target.name]: e.target.value });
   };
 
-  // ✅ Handle image selection & preview
-  const handleImageChange = (e) => {
+  const addInput = () => {
+    if (previews.length >= 5) {
+      toast.warning("You can only upload up to 5 images.");
+      return;
+    }
+    setPreviews((prev) => [...prev, ""]);
+    setImageFiles((prev) => [...prev, null]);
+  };  
+
+  const removeInput = (index) => {
+    setPreviews((prev) => prev.filter((_, i) => i !== index));
+    setImageFiles((prev) => prev.filter((_, i) => i !== index));
+    setExistingImageUrls((prev) => prev.filter((_, i) => i !== index));
+  };  
+
+  const handleImageChange = (e, index) => {
     const file = e.target.files[0];
     if (file) {
-      setImageFile(file);
-      setPreview(URL.createObjectURL(file));
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviews((prev) => {
+          const newPreviews = [...prev];
+          newPreviews[index] = reader.result;
+          return newPreviews;
+        });
+      };
+      reader.readAsDataURL(file);
+
+      setImageFiles((prev) => {
+        const newFiles = [...prev];
+        newFiles[index] = file;
+        return newFiles;
+      });
     }
   };
 
-  // ✅ Handle form submission for adding/editing products
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
@@ -62,12 +84,16 @@ const ProductsPanel = () => {
     formData.append("price", product.price);
     formData.append("description", product.description);
     formData.append("category", product.category);
-    if (imageFile) {
-      formData.append("image", imageFile);
-    }
+    imageFiles.forEach((file) => {
+      if (file) formData.append("images", file);
+    });
 
     try {
       if (editingProductId) {
+        existingImageUrls.forEach(url => {
+          formData.append("remainingImages", url);
+        });
+      
         await axios.put(`http://localhost:5000/api/products/${editingProductId}`, formData, {
           headers: { "Content-Type": "multipart/form-data" },
           withCredentials: true,
@@ -79,14 +105,13 @@ const ProductsPanel = () => {
           withCredentials: true,
         });
         toast.success("Product added successfully");
-      };
+      }
 
-      // ✅ Reset form after submission
-      setProduct({ name: "", price: "", description: "", category: "", image_url: "" });
-      setImageFile(null);
-      setPreview(null);
+      setProduct({ name: "", price: "", description: "", category: "" });
+      setImageFiles([]);
+      setPreviews([]);
       setEditingProductId(null);
-      document.getElementById("fileInput").value = ""; // ✅ Clears file input
+      setExistingImageUrls([]);
       fetchProducts();
     } catch (error) {
       toast.error("Error saving product. Please check your input and try again.");
@@ -95,7 +120,6 @@ const ProductsPanel = () => {
     }
   };
 
-  // ✅ Handle product edit
   const handleEdit = (product) => {
     setEditingProductId(product.product_id);
     setProduct({
@@ -103,17 +127,22 @@ const ProductsPanel = () => {
       price: product.price,
       description: product.description,
       category: product.category,
-      image_url: product.image_url,
     });
-    setPreview(product.image_url ? `http://localhost:5000${product.image_url}` : null);
+    if (product.image_url) {
+      const fullUrls = product.image_url.map(url => `http://localhost:5000${url}`);
+      setPreviews(fullUrls);
+      setExistingImageUrls(product.image_url); // store raw backend paths like "/uploads/xyz.webp"
+      setImageFiles(product.image_url.map(() => null));
+    } else {
+      setPreviews([]);
+      setImageFiles([]);
+    }
   };
 
-  // ✅ Handle product delete
   const handleDelete = async (product_id) => {
     if (!window.confirm("Are you sure you want to delete this product?")) return;
-
     try {
-      await axios.put(`http://localhost:5000/api/products/${product_id}/delete`, { withCredentials: true });
+      await axios.put(`http://localhost:5000/api/products/${product_id}/delete`, null, { withCredentials: true });
       toast.success("Product deleted successfully");
       fetchProducts();
     } catch (error) {
@@ -123,17 +152,28 @@ const ProductsPanel = () => {
 
   const handleRestore = async (product_id) => {
     try {
-      await axios.put(`http://localhost:5000/api/products/${product_id}/restore`, null, {
-        withCredentials: true,
-      });
+      await axios.put(`http://localhost:5000/api/products/${product_id}/restore`, null, { withCredentials: true });
       toast.success("Product restored successfully");
       fetchProducts();
     } catch (error) {
       toast.error("Failed to restore product");
     }
-  };  
+  };
 
-  if (loading) return <p>Loading products...</p>;
+  useEffect(() => {
+    return () => {
+      previews.forEach(url => URL.revokeObjectURL(url));
+    };
+  }, [previews]);
+
+  if (loading) {
+    return (
+      <div style={{ textAlign: "center", marginTop: "50px" }}>
+        <FaSpinner className="spinner" style={{ fontSize: "30px", animation: "spin 1s linear infinite" }} />
+        <p>Loading products...</p>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -142,13 +182,44 @@ const ProductsPanel = () => {
         <input type="number" name="price" placeholder="Price" value={product.price} onChange={handleChange} required />
         <input type="text" name="description" placeholder="Description" value={product.description} onChange={handleChange} required />
         <select name="category" value={product.category} onChange={handleChange} required>
-          <option>Select Category ...</option>
+          <option value="">Select Category ...</option>
           <option>Quran</option>
           <option>Modern</option>
           <option>Kids</option>
         </select>
-        <input type="file" id="fileInput" name="image" accept="image/*" onChange={handleImageChange} />
-        {preview && <img src={preview} alt="Preview" width="100" />}
+
+        <div style={{ marginBottom: "10px" }}>
+          {previews.map((src, index) => (
+            <div key={index} style={{ marginBottom: "10px" }}>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => handleImageChange(e, index)}
+              />
+              {src && <img src={src} alt={`Preview ${index}`} width="100" />}
+              <button type="button" onClick={() => removeInput(index)} style={{ marginLeft: "5px", color: "red" }}>
+                Remove
+              </button>
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={addInput}
+            disabled={previews.length >= 5}
+            style={{
+              backgroundColor: previews.length >= 5 ? "gray" : "blue",
+              color: "white",
+              padding: "8px 12px",
+              borderRadius: "5px",
+              marginTop: "10px",
+              cursor: previews.length >= 5 ? "not-allowed" : "pointer",
+            }}
+          >
+            Add Image
+          </button>
+
+        </div>
+
         <button type="submit" disabled={submitting}>
           {submitting ? (
             <>
@@ -164,73 +235,71 @@ const ProductsPanel = () => {
       </form>
 
       <h2>Products</h2>
-      {loading ? (
-        <p><FaSpinner className="spinner" /> Loading products...</p>
-      ) : products.length === 0 ? (
-        <p>No products found.</p>
-      ) : (
-        <>
-        <input
-          type="text"
-          placeholder="Search products..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          style={{ marginBottom: "10px", padding: "5px", width: "300px" }}
-        />
-        <table border="1">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Price</th>
-              <th>Description</th>
-              <th>Category</th>
-              <th>Image</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
+      <input
+        type="text"
+        placeholder="Search products..."
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        style={{ marginBottom: "10px", padding: "5px", width: "300px" }}
+      />
+
+      <table border="1">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Price</th>
+            <th>Description</th>
+            <th>Category</th>
+            <th>Images</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
           {products
             .filter((product) =>
-              `${product.name} ${product.description}`
-                .toLowerCase()
-                .includes(searchTerm.toLowerCase())
+              `${product.name} ${product.description}`.toLowerCase().includes(searchTerm.toLowerCase())
             )
-            .map((product) => {
-              return (
-                <tr key={product.product_id}>
-                  <td>{product.name}</td>
-                  <td>${product.price}</td>
-                  <td>{product.description}</td>
-                  <td>{product.category}</td>
-                  <td>
-                    {product.image_url && <img src={`http://localhost:5000${product.image_url}`} alt={product.name} width="50" />}
-                  </td>
-                  <td>
-                    {product.isdeleted ? (
-                      <>
-                        <span style={{ color: "red", fontWeight: "bold" }}>Deleted</span>
-                        <br />
-                        <button onClick={() => handleRestore(product.product_id)} style={{ marginTop: "5px", color: "green" }}>
-                          Restore
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <button onClick={() => handleEdit(product)}>Edit</button>
-                        <button onClick={() => handleDelete(product.product_id)} style={{ marginLeft: "10px", color: "red" }}>
-                          Delete
-                        </button>
-                      </>
-                    )}
-                  </td>
-                </tr>
-              )
-            })
-          }
-          </tbody>
-        </table>
-        </>
-      )}
+            .map((product) => (
+              <tr key={product.product_id}>
+                <td>{product.name}</td>
+                <td>${product.price}</td>
+                <td>{product.description}</td>
+                <td>{product.category}</td>
+                <td style={{ display: "flex", flexWrap: "wrap", gap: "5px" }}>
+                  {product.image_url &&
+                    product.image_url.map((url, idx) => (
+                      <img
+                        key={`${product.product_id}-${idx}`}
+                        src={`http://localhost:5000${url}`}
+                        alt={product.name}
+                        width="50"
+                        height="50"
+                        style={{ objectFit: "cover" }}
+                      />
+                    ))}
+                </td>
+                <td>
+                  {product.isdeleted ? (
+                    <>
+                      <span style={{ color: "red", fontWeight: "bold" }}>Deleted</span>
+                      <br />
+                      <button onClick={() => handleRestore(product.product_id)} style={{ marginTop: "5px", color: "green" }}>
+                        Restore
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button onClick={() => handleEdit(product)}>Edit</button>
+                      <button onClick={() => handleDelete(product.product_id)} style={{ marginLeft: "10px", color: "red" }}>
+                        Delete
+                      </button>
+                    </>
+                  )}
+                </td>
+              </tr>
+            ))}
+        </tbody>
+      </table>
     </div>
   );
 };

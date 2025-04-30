@@ -3,21 +3,22 @@ import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { checkAuthState } from "./redux/authSlice";
 import { fetchCart } from "./redux/cartSlice";
-import Home from "./pages/Home";
+import Home from "./pages/home";
 import Products from "./pages/products";
-import CartPage from "./pages/Cart";
-import Checkout from "./pages/Checkout";
+import ProductPage from "./pages/productPage";
+import CartPage from "./pages/cart";
+import Checkout from "./pages/checkout";
 import ThankYou from "./pages/thankyou";
-import Orders from "./pages/Orders";
-import Dashboard from "./pages/Dashboard";
-import Login from "./pages/Login";
-import ForgotPassword from "./pages/forgot-password";
-import Signup from "./pages/Signup";
-import Account from "./pages/Account";
-import RecoverAccount from "./pages/recover-account";
-import Navbar from "./components/Navbar";
-import Footer from "./components/Footer";
-import ProtectedRoute from "./components/ProtectedRoute";
+import Orders from "./pages/orders";
+import Dashboard from "./pages/dashboard";
+import Login from "./pages/login";
+import ForgotPassword from "./pages/forgotPassword";
+import Signup from "./pages/signup";
+import Account from "./pages/account";
+import RecoverAccount from "./pages/recoverAccount";
+import Navbar from "./components/navbar";
+import Footer from "./components/footer";
+import ProtectedRoute from "./components/protectedRoute";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -44,6 +45,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/products" element={<Products />} />
+        <Route path="/product/:id" element={<ProductPage />} />
         
         {/* ✅ Protected Routes */}
         <Route element={<ProtectedRoute />}>
@@ -60,9 +62,9 @@ function App() {
         </Route>
 
         <Route path="/login" element={<Login />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/forgotpass" element={<ForgotPassword />} />
         <Route path="/signup" element={<Signup />} />
-        <Route path="/recover-account" element={<RecoverAccount />} />
+        <Route path="/recoveracc" element={<RecoverAccount />} />
       </Routes>
       <Footer />
       </>

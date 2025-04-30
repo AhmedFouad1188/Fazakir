@@ -3,7 +3,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { logout } from "../redux/authSlice";
 import axios from "axios";
-import CountrySelect from "../components/CountrySelect";
+import CountrySelect from "../components/countrySelect";
 import examples from 'libphonenumber-js/examples.mobile.json';
 
 const Account = () => {

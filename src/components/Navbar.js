@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../redux/authSlice";
-import Cart from "../components/Cart"; // ✅ Import Cart component
+import Cart from "../components/cart"; // ✅ Import Cart component
 import logo from '../assets/logo.png';
 
 const Navbar = () => {

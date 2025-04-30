@@ -6,10 +6,10 @@ import styles from "../styles/home.module.css";
 import hero from "../assets/hero.webp"
 import bgimg from '../assets/bgimg.png';
 
-import BestsellingPanel from "../components/home/BestsellingPanel";
-import QuranPanel from "../components/home/QuranPanel";
-import ModernPanel from "../components/home/ModernPanel";
-import KidsPanel from "../components/home/KidsPanel";
+import BestsellingPanel from "../components/home/bestsellingPanel";
+import QuranPanel from "../components/home/quranPanel";
+import ModernPanel from "../components/home/modernPanel";
+import KidsPanel from "../components/home/kidsPanel";
 
 const Home = () => {
   const [activeTab, setActiveTab] = useState("bestselling");

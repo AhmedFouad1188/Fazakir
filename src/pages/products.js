@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import { addToCart } from "../redux/cartSlice";
 import axios from "axios";
 import { toast } from "react-toastify";
@@ -11,13 +12,13 @@ const Products = () => {
   const [category, setCategory] = useState("");
   const [dimension, setDimension] = useState("");
   const [color, setColor] = useState("");
-  const [price, setPrice] = useState("");
   const [material, setMaterial] = useState("");
   const [sortOrder, setSortOrder] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const user = useSelector((state) => state.auth.user); // ✅ Get logged-in user
   const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -40,7 +41,6 @@ const Products = () => {
     setCategory("");
     setDimension("");
     setColor("");
-    setPrice("");
     setMaterial("");
     setSortOrder("");
   };
@@ -86,13 +86,13 @@ const Products = () => {
         <p className={styles.filtertitle}>العرض حسب :</p>
         <div className={styles.filter}>
             <select value={category} onChange={(e) => setCategory(e.target.value)}>
-                <option value="">الفئة</option>
+                <option value="">الفـــــئة</option>
                 <option value="Quran">آيات قرآنية</option>
                 <option value="Modern">مودرن</option>
                 <option value="Kids">اطفال</option>
             </select>
             <select value={dimension} onChange={(e) => setDimension(e.target.value)}>
-                <option value="">المقاس</option>
+                <option value="">المقــــاس</option>
                 <option>مقاس1</option>
                 <option>مقاس2</option>
                 <option>مقاس3</option>
@@ -101,20 +101,17 @@ const Products = () => {
                 <option>مقاس6</option>
             </select>
             <select value={color} onChange={(e) => setColor(e.target.value)}>
-                <option value="">الالوان</option>
+                <option value="">الالــــوان</option>
                 <option>فاتحة</option>
                 <option>غامقة</option>
             </select>
-            <select value={price} onChange={(e) => setPrice(e.target.value)}>
-                <option value="">السعر</option>
-            </select>
             <select value={material} onChange={(e) => setMaterial(e.target.value)}>
-                <option value="">الخامة</option>
+                <option value="">الخــــامة</option>
                 <option>مط</option>
                 <option>لامع</option>
             </select>
-            <select value={sortOrder} onChange={(e) => setSortOrder(e.target.value)}>
-              <option value="">ترتيب بالسعر</option>
+            <select className={styles.sortprice} value={sortOrder} onChange={(e) => setSortOrder(e.target.value)}>
+              <option value="">ترتــيب بالســعر</option>
               <option value="asc">من الأرخص إلى الأغلى</option>
               <option value="desc">من الأغلى إلى الأرخص</option>
             </select>
@@ -124,25 +121,39 @@ const Products = () => {
       {loading && <p>Loading products...</p>}
       {error && <p style={{ color: "red" }}>{error}</p>}
 
-      <div className={styles.prodcont}>
+      <div className="prodcont">
         {filteredAndSortedProducts.length > 0 ? (
-            filteredAndSortedProducts.map((product) => (
-            <div
-              key={product.product_id}
-              className={styles.product}
-            >
-              <img
-                src={product.image_url?.startsWith("http") ? product.image_url : `http://localhost:5000${product.image_url}`} // ✅ Fix Image URL
-                alt={product.name}
-              />
-              <div>
-              <h3>{product.name}</h3>
-              <p>{product.description}</p>
-              <p className="price">${product.price}</p>
-              <button onClick={() => handleAddToCart(product)}>أضف إلى السلة</button>
-              </div>
-            </div>
-          ))
+            filteredAndSortedProducts.map((product) => {
+
+              const image = Array.isArray(product.image_url) && product.image_url.length > 0 
+                ? product.image_url[0] 
+                : null;
+              
+              const imageUrl = image?.startsWith("http") 
+                ? image 
+                : image 
+                  ? `http://localhost:5000${image.startsWith("/") ? "" : "/"}${image}` 
+                  : "/placeholder.jpg"
+
+              return (
+                <div
+                  key={product.product_id}
+                  className="product"
+                  onClick={() => navigate(`/product/${product.product_id}`)}
+                >
+                  <img
+                    src={imageUrl}
+                    alt={product.name}
+                  />
+                  <div>
+                  <h3>{product.name}</h3>
+                  <p>{product.description}</p>
+                  <p className="price">{product.price}</p>
+                  <button onClick={(e) => { e.stopPropagation(); handleAddToCart(product); }}>أضف إلى السلة</button>
+                  </div>
+                </div>
+              )
+            })
         ) : (
           <p>No products found.</p>
         )}

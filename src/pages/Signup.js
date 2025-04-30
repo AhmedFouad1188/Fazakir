@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { signup } from "../redux/authSlice";
 import styles from "../styles/signup.module.css";
-import CountrySelect from "../components/CountrySelect"; // Make sure to import the CountrySelect component
+import CountrySelect from "../components/countrySelect"; // Make sure to import the CountrySelect component
 import examples from 'libphonenumber-js/examples.mobile.json';
 
 const Signup = () => {

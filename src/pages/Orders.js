@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchOrders, cancelOrder, orderAgain } from "../redux/orderSlice";
-import EditOrderModal from "../components/EditOrderModal";
+import EditOrderModal from "../components/editOrderModal";
 
 const Orders = () => {
   const dispatch = useDispatch();
