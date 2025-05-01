@@ -64,29 +64,41 @@ router.post(
   "/add",
   authenticateFirebaseToken,
   adminOnly,
-  upload.array("images", 5), // <<< accept multiple images
+  upload.array("images", 5),
   validateProduct,
   async (req, res) => {
     const { name, price, description, category } = req.body;
 
-    let image_urls = []; // array to hold all image paths
-
     try {
+      // Step 1: Insert the product
+      const [result] = await db.execute(
+        "INSERT INTO products (name, price, description, category) VALUES (?, ?, ?, ?)",
+        [name, price, description, category]
+      );
+      const productId = result.insertId;
+
+      // Step 2: Handle images (convert and store paths in `product_images`)
+      const imageUrls = [];
+
       if (req.files && req.files.length > 0) {
         for (const file of req.files) {
-          const webpPath = await convertImageToWebP(file.path);
-          image_urls.push(webpPath);
+          const webpPath = await convertImageToWebP(file.path); // returns /uploads/filename.webp
+          imageUrls.push(webpPath);
         }
       } else {
-        image_urls.push("/uploads/default.png");
+        imageUrls.push("/uploads/default.png");
       }
 
-      const [result] = await db.execute(
-        "INSERT INTO products (name, price, description, image_url, category) VALUES (?, ?, ?, ?, ?)",
-        [name, price, description, JSON.stringify(image_urls), category] // << store as JSON string
+      // Step 3: Insert images into product_images table
+      const imageInsertPromises = imageUrls.map((url) =>
+        db.execute(
+          "INSERT INTO product_images (product_id, image_url) VALUES (?, ?)",
+          [productId, url]
+        )
       );
+      await Promise.all(imageInsertPromises);
 
-      res.status(201).json({ product_id: result.insertId });
+      res.status(201).json({ product_id: productId });
     } catch (err) {
       console.error("Upload error:", err);
       res.status(500).json({ error: "Failed to create product" });
@@ -98,29 +110,36 @@ router.post(
 router.get("/", async (req, res) => {
   try {
     const { category } = req.query;
-    let query = "SELECT * FROM products WHERE isdeleted = 0";
+    let query = `
+      SELECT 
+        p.product_id, p.name, p.price, p.description, 
+        p.category, p.isdeleted,
+        (
+          SELECT pi.image_url 
+          FROM product_images pi 
+          WHERE pi.product_id = p.product_id 
+          ORDER BY pi.image_id ASC 
+          LIMIT 1
+        ) AS image_url
+      FROM products p
+      WHERE p.isdeleted = 0
+    `;
     const values = [];
 
     if (category) {
-      query += " AND category = ?";
+      query += " AND p.category = ?";
       values.push(category);
     }
 
     const [rows] = await db.execute(query, values);
 
-    // Parse image_url if it's a stringified JSON array
-    const parsedRows = rows.map((product) => ({
+    // Assign a default image if none exists
+    const products = rows.map(product => ({
       ...product,
-      image_url: (() => {
-        try {
-          return JSON.parse(product.image_url);
-        } catch {
-          return [];
-        }
-      })(),
+      image_url: product.image_url || "/uploads/default.png"
     }));
 
-    res.json(parsedRows);
+    res.json(products);
   } catch (err) {
     console.error("Database error:", err);
     res.status(500).json({ error: "Database connection failed" });
@@ -132,7 +151,17 @@ router.get("/bestselling", async (req, res) => {
   try {
     const [rows] = await db.execute(`
       SELECT 
-        p.product_id, p.name, p.price, p.description, p.image_url, 
+        p.product_id, 
+        p.name, 
+        p.price, 
+        p.description, 
+        (
+          SELECT image_url 
+          FROM product_images 
+          WHERE product_id = p.product_id 
+          ORDER BY image_id ASC 
+          LIMIT 1
+        ) AS image_url,
         SUM(oi.quantity) AS total_sold
       FROM 
         orders o
@@ -141,7 +170,8 @@ router.get("/bestselling", async (req, res) => {
       JOIN 
         products p ON oi.product_id = p.product_id
       WHERE 
-        o.status = 'delivered' AND p.isdeleted = 0
+        o.status = 'delivered' 
+        AND p.isdeleted = 0
       GROUP BY 
         p.product_id
       ORDER BY 
@@ -149,18 +179,13 @@ router.get("/bestselling", async (req, res) => {
       LIMIT 5
     `);
 
-    const parsedRows = rows.map((product) => ({
+    // Set default image if none exists
+    const products = rows.map(product => ({
       ...product,
-      image_url: (() => {
-        try {
-          return JSON.parse(product.image_url);
-        } catch {
-          return [];
-        }
-      })(),
+      image_url: product.image_url || "/uploads/default.png"
     }));
 
-    res.json(parsedRows);
+    res.json(products);
   } catch (err) {
     console.error("Database error:", err);
     res.status(500).json({ error: "Database connection failed" });
@@ -170,15 +195,44 @@ router.get("/bestselling", async (req, res) => {
 // ✅ Get All Products for Admin Dashboard
 router.get("/dashboard_fetch", authenticateFirebaseToken, adminOnly, async (req, res) => {
   try {
-    const [rows] = await db.execute("SELECT * FROM products");
+    const [rows] = await db.execute(`
+      SELECT p.*, pi.image_url
+      FROM products p
+      LEFT JOIN product_images pi ON p.product_id = pi.product_id
+    `);
 
-    // Parse image_url field for each product
-    const parsedRows = rows.map(product => ({
-      ...product,
-      image_url: JSON.parse(product.image_url || "[]"),
-    }));
+    const productsMap = new Map();
 
-    res.json(parsedRows);
+    rows.forEach((row) => {
+      const {
+        product_id,
+        name,
+        price,
+        description,
+        category,
+        isdeleted,
+        image_url,
+      } = row;
+
+      if (!productsMap.has(product_id)) {
+        productsMap.set(product_id, {
+          product_id,
+          name,
+          price,
+          description,
+          category,
+          isdeleted,
+          image_url: image_url ? [image_url] : [],
+        });
+      } else {
+        const product = productsMap.get(product_id);
+        if (image_url) {
+          product.image_url.push(image_url);
+        }
+      }
+    });
+
+    res.json(Array.from(productsMap.values()));
   } catch (err) {
     console.error("Database error:", err);
     res.status(500).json({ error: "Database connection failed" });
@@ -189,23 +243,25 @@ router.get("/dashboard_fetch", authenticateFirebaseToken, adminOnly, async (req,
 router.get("/:id", async (req, res) => {
   const { id } = req.params;
   try {
-    const [rows] = await db.execute("SELECT * FROM products WHERE product_id = ?", [id]);
-    if (rows.length === 0) {
+    // Fetch product details
+    const [productRows] = await db.execute(
+      "SELECT * FROM products WHERE product_id = ?",
+      [id]
+    );
+    if (productRows.length === 0) {
       return res.status(404).json({ message: "Product not found" });
     }
+    const product = productRows[0];
 
-    const parsedRows = rows.map((product) => ({
-      ...product,
-      image_url: (() => {
-        try {
-          return JSON.parse(product.image_url);
-        } catch {
-          return [];
-        }
-      })(),
-    }));
+    // Fetch associated images
+    const [imageRows] = await db.execute(
+      "SELECT image_url FROM product_images WHERE product_id = ?",
+      [id]
+    );
+    const imageUrls = imageRows.map((row) => row.image_url);
 
-    res.json(parsedRows);
+    // Combine product data with image URLs
+    res.json({ ...product, image_url: imageUrls });
   } catch (err) {
     console.error("Server error:", err);
     res.status(500).json({ error: "Server error" });
@@ -224,39 +280,51 @@ router.put(
     const { name, price, description, category, remainingImages } = req.body;
 
     try {
-      const [existingProduct] = await db.execute("SELECT * FROM products WHERE product_id = ?", [product_id]);
+      const [existingProduct] = await db.execute(
+        "SELECT * FROM products WHERE product_id = ?",
+        [product_id]
+      );
       if (existingProduct.length === 0) {
         return res.status(404).json({ error: "Product not found" });
       }
 
-      let image_url = [];
-      const oldImageUrls = JSON.parse(existingProduct[0].image_url || "[]");
+      // Step 1: Fetch existing image URLs from product_images
+      const [existingImages] = await db.execute(
+        "SELECT image_url FROM product_images WHERE product_id = ?",
+        [product_id]
+      );
+      const existingUrls = existingImages.map((img) => img.image_url);
+
       const keepImages = Array.isArray(remainingImages)
         ? remainingImages
         : typeof remainingImages === "string"
         ? [remainingImages]
         : [];
 
-      // Delete removed images from disk
-      oldImageUrls.forEach((oldImg) => {
-        if (!keepImages.includes(oldImg) && oldImg !== "/uploads/default.png") {
-          const oldImagePath = path.join(__dirname, "../../", oldImg);
-          if (fs.existsSync(oldImagePath)) {
-            fs.unlinkSync(oldImagePath);
-          }
-        }
-      });
-
-      image_url = [...keepImages];
-
-      // Convert and add newly uploaded images
-      if (req.files && req.files.length > 0) {
-        for (const file of req.files) {
-          const convertedUrl = await convertImageToWebP(file.path);
-          image_url.push(convertedUrl);
+      // Step 2: Delete removed images from disk and database
+      for (const img of existingUrls) {
+        if (!keepImages.includes(img) && img !== "/uploads/default.png") {
+          const imgPath = path.join(__dirname, "../../", img);
+          if (fs.existsSync(imgPath)) fs.unlinkSync(imgPath);
+          await db.execute(
+            "DELETE FROM product_images WHERE product_id = ? AND image_url = ?",
+            [product_id, img]
+          );
         }
       }
 
+      // Step 3: Add new uploaded images
+      if (req.files && req.files.length > 0) {
+        for (const file of req.files) {
+          const webpPath = await convertImageToWebP(file.path);
+          await db.execute(
+            "INSERT INTO product_images (product_id, image_url) VALUES (?, ?)",
+            [product_id, webpPath]
+          );
+        }
+      }
+
+      // Step 4: Update product info
       const updateFields = [];
       const values = [];
 
@@ -277,13 +345,11 @@ router.put(
         values.push(category);
       }
 
-      // Always update image_url
-      updateFields.push("image_url = ?");
-      values.push(JSON.stringify(image_url));
-
-      values.push(product_id);
-      const query = `UPDATE products SET ${updateFields.join(", ")} WHERE product_id = ?`;
-      await db.execute(query, values);
+      if (updateFields.length > 0) {
+        values.push(product_id);
+        const query = `UPDATE products SET ${updateFields.join(", ")} WHERE product_id = ?`;
+        await db.execute(query, values);
+      }
 
       res.json({ message: "Product updated successfully" });
     } catch (err) {

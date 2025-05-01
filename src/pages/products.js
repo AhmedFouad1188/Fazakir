@@ -125,9 +125,7 @@ const Products = () => {
         {filteredAndSortedProducts.length > 0 ? (
             filteredAndSortedProducts.map((product) => {
 
-              const image = Array.isArray(product.image_url) && product.image_url.length > 0 
-                ? product.image_url[0] 
-                : null;
+              const image = product.image_url?.[0];
               
               const imageUrl = image?.startsWith("http") 
                 ? image 
