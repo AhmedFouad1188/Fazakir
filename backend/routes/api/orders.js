@@ -85,10 +85,7 @@ router.get("/", authenticateFirebaseToken, async (req, res) => {
 
     for (const order of orders) {
       const [items] = await db.execute(
-        `SELECT oi.*, p.name, p.image_url
-         FROM order_items oi
-         JOIN products p ON oi.product_id = p.product_id
-         WHERE oi.order_id = ?`,
+        `SELECT * FROM order_items WHERE order_id = ?`,
         [order.id]
       );
 
@@ -211,10 +208,7 @@ router.get("/fetchAllOrders", authenticateFirebaseToken, adminOnly, async (req, 
 
     for (const order of orders) {
       const [items] = await db.execute(
-        `SELECT oi.*, p.name, p.image_url
-         FROM order_items oi
-         JOIN products p ON oi.product_id = p.product_id
-         WHERE oi.order_id = ?`,
+        `SELECT * FROM order_items WHERE order_id = ?`,
         [order.id]
       );
 

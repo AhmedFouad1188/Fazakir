@@ -87,6 +87,11 @@ const EditOrderModal = ({ order, onClose }) => {
         <h2>Edit Order #{order.id}</h2>
         {items.map((item) => (
           <div key={item.product_id} className="mb-4 flex items-center justify-between">
+            <img
+              src={item.image_url && item.image_url.startsWith("http") ? item.image_url : `http://localhost:5000${item.image_url || ""}`}
+              alt={item.name}
+              style={{ width: "100px", height: "100px", objectFit: "cover", borderRadius: "5px", marginRight: "15px" }}
+            />
             <div className="flex-1">{item.name}</div>
             <div className="flex items-center space-x-2">
               <button

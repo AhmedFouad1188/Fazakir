@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css"; // Import styles
+import { toast } from "react-toastify";
 import styles from "../styles/home.module.css";
 import hero from "../assets/hero.webp"
 import bgimg from '../assets/bgimg.png';
@@ -32,8 +31,6 @@ const Home = () => {
 
   return (
     <div>
-      <ToastContainer />
-
       <img src={hero} alt="Hero Image" className={styles.hero} />
 
       <div className={styles.productnav}>

@@ -1,10 +1,15 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchOrders, cancelOrder, orderAgain } from "../redux/orderSlice";
 import EditOrderModal from "../components/editOrderModal";
+import { toast } from "react-toastify";
+import { confirmAlert } from 'react-confirm-alert';
+import 'react-confirm-alert/src/react-confirm-alert.css';
 
 const Orders = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { orders = [], loading, error } = useSelector((state) => state.order || {});
   const [selectedOrder, setSelectedOrder] = useState(null);
 
@@ -17,18 +22,64 @@ const Orders = () => {
   };
 
   const handleCancel = (order) => {
-    const confirmed = window.confirm("Are you sure you want to cancel this order ?");
-    if (!confirmed) return;
-
-    dispatch(cancelOrder({orderId: order.id}));
-  };
+      confirmAlert({
+        title: 'Cancel Order ?',
+        message: `Are you sure you want to cancel Order no. ${order.id} ?`,
+        buttons: [
+          {
+            label: 'Yes',
+            onClick: async () => {
+              try {
+                await dispatch(cancelOrder({orderId: order.id})).unwrap();
+                toast.error(`Order cancelled successfully`, {
+                  position: "top-right",
+                  autoClose: 2000,
+                });
+              } catch (error) {
+                toast.error("Failed to cancel order. Try again!", {
+                  position: "top-right",
+                  autoClose: 2000,
+                });
+              }
+            }
+          },
+          {
+            label: 'No'
+            // No action needed; this closes the dialog
+          }
+        ]
+      });
+    };
 
   const handleOrderAgain = (order) => {
-    const confirmed = window.confirm("Are you sure you want to re-order this order again ?");
-    if (!confirmed) return;
-
-    dispatch(orderAgain({orderId: order.id}));
-  }
+    confirmAlert({
+      title: 'Order Again ?',
+      message: `Are you sure you want to make this order again ?`,
+      buttons: [
+        {
+          label: 'Yes',
+          onClick: async () => {
+            try {
+              await dispatch(orderAgain({orderId: order.id})).unwrap();
+              toast.success(`Order placed successfully`, {
+                position: "top-right",
+                autoClose: 2000,
+              });
+            } catch (error) {
+              toast.error("Failed to place order. Try again!", {
+                position: "top-right",
+                autoClose: 2000,
+              });
+            }
+          }
+        },
+        {
+          label: 'No'
+          // No action needed; this closes the dialog
+        }
+      ]
+    });
+  };
 
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
@@ -40,12 +91,19 @@ const Orders = () => {
         <div key={order.id} className="border rounded p-4 mb-4">
           <p><strong>Order ID:</strong> {order.id}</p>
           <p><strong>Status:</strong> {order.status}</p>
-          <p><strong>Payment:</strong> {order.payment_method}</p>
-          <p><strong>Date:</strong> {new Date(order.created_at).toLocaleString()}</p>
+          <p><strong>Created at:</strong> {new Date(order.created_at).toLocaleString()}</p>
+          <p><strong>Total:</strong> {order.total_price}</p>
+          <p><strong>Payment Method:</strong> {order.payment_method}</p>
           <ul className="mt-2">
             {order.items.map((item) => (
               <li key={item.product_id}>
-                {item.name} - {item.quantity} × ${item.price}
+                <img
+                  src={item.image_url && item.image_url.startsWith("http") ? item.image_url : `http://localhost:5000${item.image_url || ""}`}
+                  alt={item.name}
+                  style={{ width: "100px", height: "100px", objectFit: "cover", borderRadius: "5px", marginRight: "15px", cursor: "pointer" }}
+                  onClick={() => navigate(`/product/${item.product_id}`)}
+                />
+                {item.name} - {item.quantity} × {item.price}
               </li>
             ))}
           </ul>

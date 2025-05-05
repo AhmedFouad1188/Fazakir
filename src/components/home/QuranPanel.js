@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import { addToCart } from "../../redux/cartSlice";
 import axios from "axios";
 import { toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 
 const QuranPanel = () => {
     const [products, setProducts] = useState([]);
@@ -64,17 +63,6 @@ const QuranPanel = () => {
               <div className="prodcont">
                 {products.length > 0 ? (
                   products.map((product) => {
-
-                    const image = Array.isArray(product.image_url) && product.image_url.length > 0 
-                      ? product.image_url[0] 
-                      : null;
-                    
-                    const imageUrl = image?.startsWith("http") 
-                      ? image 
-                      : image 
-                        ? `http://localhost:5000${image.startsWith("/") ? "" : "/"}${image}` 
-                        : "/placeholder.jpg";
-
                     return (
                       <div
                         key={product.product_id}
@@ -82,7 +70,7 @@ const QuranPanel = () => {
                         onClick={() => navigate(`/product/${product.product_id}`)}
                       >
                         <img
-                          src={imageUrl}
+                          src={product.image_url?.startsWith("http") ? product.image_url : `http://localhost:5000${product.image_url}`}
                           alt={product.name}
                         />
                         <div>

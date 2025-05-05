@@ -5,6 +5,9 @@ import { logout } from "../redux/authSlice";
 import axios from "axios";
 import CountrySelect from "../components/countrySelect";
 import examples from 'libphonenumber-js/examples.mobile.json';
+import { toast } from "react-toastify";
+import { confirmAlert } from 'react-confirm-alert';
+import 'react-confirm-alert/src/react-confirm-alert.css';
 
 const Account = () => {
   const user = useSelector((state) => state.auth.user);
@@ -13,7 +16,6 @@ const Account = () => {
   const [account, setAccount] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState("");
   const [mobileMaxLength, setMobileMaxLength] = useState(15); // Fallback to a max length of 15
 
   useEffect(() => {
@@ -58,7 +60,6 @@ const Account = () => {
 
     setAccount({ ...account, [name]: value });
     setError("");
-    setSuccess("");
   };
 
   const handleCountryChange = (selectedCountry) => {
@@ -84,31 +85,53 @@ const Account = () => {
 
   const handleSave = async () => {
     setLoading(true);
-    setSuccess("");
     try {
       await axios.put("http://localhost:5000/api/auth/accountupdate", account, { withCredentials: true });
-      setSuccess("Account updated successfully.");
-    } catch (err) {
-      console.error(err);
-      setError("Failed to save changes.");
+      toast.success(`Account updated successfully`, {
+        position: "top-right",
+        autoClose: 2000,
+      });
+    } catch (error) {
+      toast.error("Failed to save changes", {
+        position: "top-right",
+        autoClose: 2000,
+      });
     }
     setLoading(false);
   };
 
   const handleSoftDelete = async () => {
-    if (!window.confirm("Are you sure you want to delete your account? You can recover it within 30 days.")) return;
-  
-    try {
-      await axios.post("http://localhost:5000/api/auth/soft-delete", {}, { withCredentials: true });
-      alert("Account marked for deletion. You have 30 days to recover it.");
+        confirmAlert({
+          title: 'Delete Your Account ?',
+          message: `Are you sure you want to delete your account ? Note that you can still recover your account within 30 days from the time of deletion.`,
+          buttons: [
+            {
+              label: 'Yes',
+              onClick: async () => {
+                try {
+                  await axios.post("http://localhost:5000/api/auth/soft-delete", {}, { withCredentials: true });
+                  toast.error(`Account marked for deletion`, {
+                    position: "top-right",
+                    autoClose: 2000,
+                  });
 
-      await dispatch(logout()).unwrap();
-      navigate("/");
-    } catch (error) {
-      console.error("Soft delete failed:", error);
-      alert("Failed to delete account.");
-    }
-  };
+                  await dispatch(logout()).unwrap();
+                  navigate("/");
+                } catch (error) {
+                  toast.error("Failed to delete account", {
+                    position: "top-right",
+                    autoClose: 2000,
+                  });
+                }
+              }
+            },
+            {
+              label: 'No'
+              // No action needed; this closes the dialog
+            }
+          ]
+        });
+      };
 
   if (error) return <p style={{ color: "red" }}>{error}</p>;
   if (!account) return <p>Loading account...</p>;
@@ -166,7 +189,6 @@ const Account = () => {
           {loading ? "Saving..." : "Save"}
         </button>
       </div>
-      {success && <p style={{ color: "green" }}>{success}</p>}
 
       <button onClick={handleSoftDelete} style={{ marginTop: 20, color: "red" }}>
         Delete My Account

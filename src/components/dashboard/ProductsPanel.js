@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { FaSpinner } from "react-icons/fa";
@@ -18,6 +19,7 @@ const ProductsPanel = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const navigate = useNavigate();
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -261,7 +263,7 @@ const ProductsPanel = () => {
             )
             .map((product) => (
               <tr key={product.product_id}>
-                <td>{product.name}</td>
+                <td onClick={() => navigate(`/product/${product.product_id}`)} style={{ cursor: "pointer" }}>{product.name}</td>
                 <td>${product.price}</td>
                 <td>{product.description}</td>
                 <td>{product.category}</td>

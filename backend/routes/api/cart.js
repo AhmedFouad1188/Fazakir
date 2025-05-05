@@ -13,14 +13,20 @@ router.get("/", authenticateFirebaseToken, async (req, res) => {
                 p.name AS name,
                 p.price AS price,
                 p.description AS description,
-                p.image_url AS image_url,
-                c.quantity
+                c.quantity,
+                (
+                  SELECT pi.image_url 
+                  FROM product_images pi 
+                  WHERE pi.product_id = p.product_id 
+                  ORDER BY pi.image_id ASC 
+                  LIMIT 1
+                ) AS image_url
             FROM
                 cart c
             JOIN
                 products p ON c.product_id = p.product_id
             WHERE
-                c.firebase_uid = ?`, [firebaseUID]);
+                c.firebase_uid = ? AND p.isdeleted = 0`, [firebaseUID]);
     res.json(cartItems);
   } catch (error) {
     console.error("Error fetching cart:", error);

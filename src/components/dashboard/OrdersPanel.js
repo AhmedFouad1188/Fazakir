@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-toastify";
 
@@ -6,7 +7,8 @@ const OrdersPanel = () => {
   const [orders, setOrders] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
-  const [expandedOrderId, setExpandedOrderId] = useState(null); // 👈 for toggling order items
+  const [expandedOrderId, setExpandedOrderId] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -127,7 +129,7 @@ const OrdersPanel = () => {
                             <><table border="1" style={{ width: "100%", marginTop: "10px" }}>
                               <thead>
                                 <tr>
-                                  <th>Product Name</th>
+                                  <th>Product</th>
                                   <th>Quantity</th>
                                   <th>Price</th>
                                   <th>Subtotal</th>
@@ -136,10 +138,15 @@ const OrdersPanel = () => {
                               <tbody>
                                 {o.items.map((item, index) => (
                                   <tr key={index}>
-                                    <td>{item.name}</td>
+                                    <td><img
+                                          src={item.image_url && item.image_url.startsWith("http") ? item.image_url : `http://localhost:5000${item.image_url || ""}`}
+                                          alt={item.name}
+                                          style={{ width: "100px", height: "100px", objectFit: "cover", borderRadius: "5px", marginRight: "15px", cursor: "pointer" }}
+                                          onClick={() => navigate(`/product/${item.product_id}`)}
+                                        />{item.name}</td>
                                     <td>{item.quantity}</td>
-                                    <td>${item.price}</td>
-                                    <td>${item.quantity * item.price}</td>
+                                    <td>{item.price}</td>
+                                    <td>{item.quantity * item.price}</td>
                                   </tr>
                                 ))}
                               </tbody>
