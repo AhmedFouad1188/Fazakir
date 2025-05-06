@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { FaSpinner } from "react-icons/fa";
+import { confirmAlert } from 'react-confirm-alert';
+import 'react-confirm-alert/src/react-confirm-alert.css';
 
 const ProductsPanel = () => {
   const [products, setProducts] = useState([]);
@@ -94,27 +96,60 @@ const ProductsPanel = () => {
       if (editingProductId) {
         existingImageUrls.forEach(url => {
           formData.append("remainingImages", url);
-        });
-      
-        await axios.put(`http://localhost:5000/api/products/${editingProductId}`, formData, {
-          headers: { "Content-Type": "multipart/form-data" },
-          withCredentials: true,
-        });
-        toast.success("Product updated successfully");
-      } else {
-        await axios.post("http://localhost:5000/api/products/add", formData, {
-          headers: { "Content-Type": "multipart/form-data" },
-          withCredentials: true,
-        });
-        toast.success("Product added successfully");
-      }
+        
+            confirmAlert({
+              title: `Update ${product.name} ?`,
+              message: `Are you sure you want to update ${product.name} ?`,
+              buttons: [
+                {
+                  label: 'Yes',
+                  onClick: async () => {
 
+                    await axios.put(`http://localhost:5000/api/products/${editingProductId}`, formData, {
+                      headers: { "Content-Type": "multipart/form-data" },
+                      withCredentials: true,
+                    });
+                    toast.success(`${product.name} updated successfully`);
+                    fetchProducts();
+                  }
+                },
+                {
+                  label: 'No'
+                  // No action needed; this closes the dialog
+                }
+              ]
+            });
+        });
+      } else {
+        confirmAlert({
+          title: 'Add Product ?',
+          message: `Are you sure you want to add this product ?`,
+          buttons: [
+            {
+              label: 'Yes',
+              onClick: async () => {
+
+                await axios.post("http://localhost:5000/api/products/add", formData, {
+                  headers: { "Content-Type": "multipart/form-data" },
+                  withCredentials: true,
+                });
+                toast.success("Product added successfully");
+                fetchProducts();
+              }
+            },
+            {
+              label: 'No'
+              // No action needed; this closes the dialog
+            }
+          ]
+        });
+      }
+        
       setProduct({ name: "", price: "", description: "", category: "" });
       setImageFiles([]);
       setPreviews([]);
       setEditingProductId(null);
       setExistingImageUrls([]);
-      fetchProducts();
     } catch (error) {
       toast.error("Error saving product. Please check your input and try again.");
     } finally {
@@ -141,25 +176,54 @@ const ProductsPanel = () => {
     }
   };
 
-  const handleDelete = async (product_id) => {
-    if (!window.confirm("Are you sure you want to delete this product?")) return;
-    try {
-      await axios.put(`http://localhost:5000/api/products/${product_id}/delete`, null, { withCredentials: true });
-      toast.success("Product deleted successfully");
-      fetchProducts();
-    } catch (error) {
-      toast.error("Error deleting product. Please try again.");
-    }
+  const handleDelete = async (product) => {
+    confirmAlert({
+      title: `Delete ${product.name} ?`,
+      message: `Are you sure you want to delete ${product.name} ?`,
+      buttons: [
+        {
+          label: 'Yes',
+          onClick: async () => {
+            try {
+              await axios.put(`http://localhost:5000/api/products/${product.product_id}/delete`, null, { withCredentials: true });
+              toast.success(`${product.name} deleted successfully`);
+              fetchProducts();
+            } catch (error) {
+              toast.error("Error deleting product. Please try again.");
+            }
+          }
+        },
+        {
+          label: 'No'
+          // No action needed; this closes the dialog
+        }
+      ]
+    });
   };
 
-  const handleRestore = async (product_id) => {
-    try {
-      await axios.put(`http://localhost:5000/api/products/${product_id}/restore`, null, { withCredentials: true });
-      toast.success("Product restored successfully");
-      fetchProducts();
-    } catch (error) {
-      toast.error("Failed to restore product");
-    }
+  const handleRestore = async (product) => {
+    confirmAlert({
+      title: `Restore ${product.name} ?`,
+      message: `Are you sure you want to restore ${product.name} ?`,
+      buttons: [
+        {
+          label: 'Yes',
+          onClick: async () => {
+            try {
+              await axios.put(`http://localhost:5000/api/products/${product.product_id}/restore`, null, { withCredentials: true });
+              toast.success(`${product.name} restored successfully`);
+              fetchProducts();
+            } catch (error) {
+              toast.error("Failed to restore product");
+            }
+          }
+        },
+        {
+          label: 'No'
+          // No action needed; this closes the dialog
+        }
+      ]
+    });
   };
 
   useEffect(() => {
@@ -264,7 +328,7 @@ const ProductsPanel = () => {
             .map((product) => (
               <tr key={product.product_id}>
                 <td onClick={() => navigate(`/product/${product.product_id}`)} style={{ cursor: "pointer" }}>{product.name}</td>
-                <td>${product.price}</td>
+                <td>{product.price}</td>
                 <td>{product.description}</td>
                 <td>{product.category}</td>
                 <td style={{ display: "flex", flexWrap: "wrap", gap: "5px" }}>
@@ -285,14 +349,14 @@ const ProductsPanel = () => {
                     <>
                       <span style={{ color: "red", fontWeight: "bold" }}>Deleted</span>
                       <br />
-                      <button onClick={() => handleRestore(product.product_id)} style={{ marginTop: "5px", color: "green" }}>
+                      <button onClick={() => handleRestore(product)} style={{ marginTop: "5px", color: "green" }}>
                         Restore
                       </button>
                     </>
                   ) : (
                     <>
                       <button onClick={() => handleEdit(product)}>Edit</button>
-                      <button onClick={() => handleDelete(product.product_id)} style={{ marginLeft: "10px", color: "red" }}>
+                      <button onClick={() => handleDelete(product)} style={{ marginLeft: "10px", color: "red" }}>
                         Delete
                       </button>
                     </>

@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-toastify";
+import { confirmAlert } from 'react-confirm-alert';
+import 'react-confirm-alert/src/react-confirm-alert.css';
 
 const OrdersPanel = () => {
   const [orders, setOrders] = useState([]);
@@ -156,16 +158,32 @@ const OrdersPanel = () => {
                                     onClick={async () => {
                                       const next = nextStatus(o.status);
                                       if (!next) return;
-                                      try {
-                                        await axios.put(`http://localhost:5000/api/orders/updateStatus/${o.id}`, { status: next }, { withCredentials: true });
-                                        setOrders((prev) => prev.map((order) => order.id === o.id ? { ...order, status: next } : order
-                                        )
-                                        );
-                                        toast.success(`Order marked as ${next}`);
-                                      } catch {
-                                        toast.error("Failed to update status");
-                                      }
-                                    } }
+
+                                      confirmAlert({
+                                        title: `Mark order as ${next} ?`,
+                                        message: `Are you sure you want to mark this order as ${next} ?`,
+                                        buttons: [
+                                          {
+                                            label: 'Yes',
+                                            onClick: async () => {
+                                              try {
+                                                await axios.put(`http://localhost:5000/api/orders/updateStatus/${o.id}`, { status: next }, { withCredentials: true });
+                                                setOrders((prev) => prev.map((order) => order.id === o.id ? { ...order, status: next } : order
+                                                )
+                                                );
+                                                toast.success(`Order marked as ${next}`);
+                                              } catch {
+                                                toast.error("Failed to update status");
+                                              }
+                                            }
+                                          },
+                                          {
+                                            label: 'No'
+                                            // No action needed; this closes the dialog
+                                          }
+                                        ]
+                                      });
+                                    }}
                                   >
                                     Mark as {nextStatus(o.status)}
                                   </button>
@@ -174,16 +192,31 @@ const OrdersPanel = () => {
                                 {o.status !== "cancelled" && o.status !== "delivered" && (
                                   <button
                                     onClick={async () => {
-                                      try {
-                                        await axios.put(`http://localhost:5000/api/orders/cancel/${o.id}`, {}, { withCredentials: true });
-                                        setOrders((prev) => prev.map((order) => order.id === o.id ? { ...order, status: "cancelled" } : order
-                                        )
-                                        );
-                                        toast.success("Order cancelled");
-                                      } catch {
-                                        toast.error("Failed to cancel order");
-                                      }
-                                    } }
+                                      confirmAlert({
+                                        title: `Cancel order ${o.id} ?`,
+                                        message: `Are you sure you want to cancel order ${o.id} ?`,
+                                        buttons: [
+                                          {
+                                            label: 'Yes',
+                                            onClick: async () => {
+                                              try {
+                                                await axios.put(`http://localhost:5000/api/orders/cancel/${o.id}`, {}, { withCredentials: true });
+                                                setOrders((prev) => prev.map((order) => order.id === o.id ? { ...order, status: "cancelled" } : order
+                                                )
+                                                );
+                                                toast.error("Order cancelled");
+                                              } catch {
+                                                toast.error("Failed to cancel order");
+                                              }
+                                            }
+                                          },
+                                          {
+                                            label: 'No'
+                                            // No action needed; this closes the dialog
+                                          }
+                                        ]
+                                      });
+                                    }}
                                     style={{ backgroundColor: "#f44336", color: "white", border: "none", padding: "5px 10px" }}
                                   >
                                     Cancel Order

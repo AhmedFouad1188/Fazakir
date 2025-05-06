@@ -71,7 +71,7 @@ const KidsPanel = () => {
                         onClick={() => navigate(`/product/${product.product_id}`)}
                       >
                         <img
-                          src={product.image_url?.startsWith("http") ? product.image_url : `http://localhost:5000${product.image_url}`}
+                          src={product.image_url && product.image_url.startsWith("http") ? product.image_url : `http://localhost:5000${product.image_url || ""}`}
                           alt={product.name}
                         />
                         <div>

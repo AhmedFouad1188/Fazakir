@@ -9,14 +9,11 @@ import 'react-confirm-alert/src/react-confirm-alert.css';
 const CartPage = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const user = useSelector((state) => state.auth.user);
-  const cartItems = useSelector((state) => state.cart.items || []);
+  const cartItems = useSelector((state) => state.cart.items);
 
   useEffect(() => {
-    if (user?.token) {
       dispatch(fetchCart());
-    }
-  }, [dispatch, user?.token]);
+  }, [dispatch]);
 
   const handleRemove = (product_id, name) => {
     confirmAlert({

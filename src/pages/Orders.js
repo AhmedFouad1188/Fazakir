@@ -49,7 +49,7 @@ const Orders = () => {
           }
         ]
       });
-    };
+  };
 
   const handleOrderAgain = (order) => {
     confirmAlert({

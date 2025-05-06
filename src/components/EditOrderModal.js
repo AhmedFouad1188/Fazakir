@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useDispatch } from "react-redux";
 import { updateOrderItem, deleteOrderItem, fetchOrders } from "../redux/orderSlice";
+import { toast } from "react-toastify";
 
 const EditOrderModal = ({ order, onClose }) => {
   const dispatch = useDispatch();
@@ -76,6 +77,8 @@ const EditOrderModal = ({ order, onClose }) => {
     if (hasChanges) {
       await dispatch(fetchOrders());
     }
+
+    toast.success("Order updated successfully");
 
     setIsSubmitting(false);
     onClose();
