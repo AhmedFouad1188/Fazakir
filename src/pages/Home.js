@@ -30,15 +30,19 @@ const Home = () => {
   };
 
   return (
-    <div>
+    <div className={styles.container}>
+      <div className={styles.herocont}>
       <img src={hero} alt="Hero Image" className={styles.hero} />
+      </div>
 
       <div className={styles.productnav}>
         <span onClick={() => navigate("/products")} className={styles.all}>مـنـتـجـاتـنا</span>
+        <div className={styles.subnav}>
         <span onClick={() => setActiveTab("bestselling")}>الأكــثر مبيــعاً</span>
         <span onClick={() => setActiveTab("quran")}>لوحات آيات قرآنية</span>
-        <span onClick={() => setActiveTab("modern")}>لوحات مـــــــودرن </span>
-        <span onClick={() => setActiveTab("kids")}>لوحات اطفــــــال</span>
+        <span onClick={() => setActiveTab("modern")}>لوحات مـــــودرن </span>
+        <span onClick={() => setActiveTab("kids")}>لوحات اطفـــال</span>
+        </div>
       </div>
 
       <div>
@@ -50,8 +54,9 @@ const Home = () => {
       <div className={styles.introbody}>
         <p>نحنُ فِى رحــلةِ الحَياة نُخطىء أحيَــاناً، نَتَـعثـر، نَـقَـع، و رُبما نَتوه.. ولكنْ الذِكــرَى تَبقى نــوراً يُضىء طَريقــنا. هذا المشروع يَهدفُ إلى تَحويــل جُــدران بيوتِــنا إلى مَصدر إلهــام يَومي، يُذكــرنا بإيمَــاننا ويُقربــنا مِن اللّه.</p>
         <p>مَشروع "فَــذَكِّـر" هو مبادَرة فَنية إســلامِــية تُترجم كَلِمَــات اللّه تَعَالى و رَسُــولِه الكَــريم إلى لَوحَــاتٍ فَــنيةٍ مُــضـيئة، تَحــمِل في طَــياتِها مَــعانى التذكيــر والمــوعِظةِ الحَسَــنة.</p>
-        <img src={bgimg} alt="Background Image"/>
       </div>
+
+      <img src={bgimg} className={styles.background} alt="Background Image"/>
 
       <div className={styles.faq}>
         <span className={styles.all}>الاسئلة الشائعة</span>

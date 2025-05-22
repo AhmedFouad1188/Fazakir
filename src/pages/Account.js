@@ -8,6 +8,7 @@ import examples from 'libphonenumber-js/examples.mobile.json';
 import { toast } from "react-toastify";
 import { confirmAlert } from 'react-confirm-alert';
 import 'react-confirm-alert/src/react-confirm-alert.css';
+import styles from "../styles/account.module.css";
 
 const Account = () => {
   const user = useSelector((state) => state.auth.user);
@@ -138,24 +139,25 @@ const Account = () => {
 
   return (
     <div>
-      <h2>Edit Your Account</h2>
-      <div style={{ display: "flex", flexDirection: "column", maxWidth: 400 }}>
-        <label>First Name:</label>
+      <h2>حســــابك</h2>
+      <div className={styles.container}>
+        <label>الاسم الاول</label>
         <input name="firstname" value={account.firstname} onChange={handleChange} required />
 
-        <label>Last Name:</label>
+        <label>الاسم الاخير</label>
         <input name="lastname" value={account.lastname} onChange={handleChange} required />
 
-        <label>Email:</label>
+        <label>البريد الالكترونى</label>
         <input name="email" value={account.email} readOnly />
 
-        <label>Country:</label>
+        <label>الدولة</label>
         <CountrySelect onChange={handleCountryChange} value={account.country} required />
 
-        <input name="countrycode" value={account.dial_code} onChange={handleChange} readOnly />
-
-        <label>Mobile:</label>
+        <label>رقم الجوال</label>
+        <div className={styles.mobcont}>
+        <input className={styles.countrycode} name="countrycode" value={account.dial_code} onChange={handleChange} readOnly />
         <input
+          className={styles.mobile}
           name="mobile"
           value={account.mobile}
           onChange={handleChange}
@@ -163,35 +165,36 @@ const Account = () => {
           placeholder={`Your mobile length must be ${mobileMaxLength} digits`}
           required
         />
+        </div>
 
-        <label>Governorate:</label>
+        <label>المحافظة</label>
         <input name="governorate" value={account.governorate} onChange={handleChange} />
 
-        <label>District:</label>
+        <label>المنطقة</label>
         <input name="district" value={account.district} onChange={handleChange} />
 
-        <label>Street:</label>
+        <label>الشارع</label>
         <input name="street" value={account.street} onChange={handleChange} required />
 
-        <label>Building No.:</label>
+        <label>رقم المبنى</label>
         <input name="building" value={account.building} onChange={handleChange} />
 
-        <label>Floor:</label>
+        <label>الدور</label>
         <input name="floor" value={account.floor} onChange={handleChange} />
 
-        <label>Apartment No.:</label>
+        <label>شقة رقم</label>
         <input name="apartment" value={account.apartment} onChange={handleChange} />
 
-        <label>Landmark:</label>
+        <label>علامة مميزة</label>
         <input name="landmark" value={account.landmark} onChange={handleChange} />
 
         <button onClick={handleSave} disabled={loading} style={{ marginTop: 10 }}>
-          {loading ? "Saving..." : "Save"}
+          {loading ? "جارى الحفظ..." : "حفظ"}
         </button>
       </div>
 
-      <button onClick={handleSoftDelete} style={{ marginTop: 20, color: "red" }}>
-        Delete My Account
+      <button onClick={handleSoftDelete}>
+        إلغاء الحساب
       </button>
     </div>
   );

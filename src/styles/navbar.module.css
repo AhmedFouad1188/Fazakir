@@ -1,0 +1,64 @@
+.navcont {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.5rem;
+    padding: 1vw;
+}
+
+.navcont img {
+    width: 11vw;
+}
+
+.desknav {
+    display: none;
+}
+
+.mobnav {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: center;
+    align-items: center;
+    gap: 5vw;
+}
+
+.offcanvas {
+    width: 50vw !important;
+}
+
+.offcanvasbody {
+    font-size: 1.2rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 8vw;
+}
+
+.links {
+    text-decoration: none;
+    color: #a38483;
+}
+
+@media (min-width: 1200px) {
+    .mobnav {
+        display: none;
+    }
+
+    .desknav {
+        display: flex;
+        flex-direction: row-reverse;
+        justify-content: center;
+        align-items: center;
+        gap: 2vw;
+        margin-top: -10vw;
+    }
+
+    .desknav button {
+        background-color: red;
+        padding: 1vw 2vw;
+        border-radius: 0.5vw;
+        margin-bottom: 3vw;
+    }
+}

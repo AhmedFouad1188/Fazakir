@@ -1,62 +1,98 @@
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../redux/authSlice";
-import Cart from "../components/cart"; // ✅ Import Cart component
-import logo from '../assets/logo.png';
+import Cart from "../components/cart";
+import logo from "../assets/logo.png";
+import styles from "../styles/navbar.module.css";
 
-const Navbar = () => {
+import {
+  Navbar,
+  Offcanvas,
+  Nav,
+  Container,
+  Button
+} from "react-bootstrap";
+
+const NavbarComponent = () => {
   const user = useSelector((state) => state.auth.user);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const handleLogout = async () => {
+  const [show, setShow] = useState(false);
+
+  const handleLogout = () => {
     dispatch(logout());
-    navigate("/login"); // ✅ Redirect to login page after logout
+    navigate("/login");
+    setShow(false); // Close offcanvas after logout
   };
 
   return (
-    <nav style={{ 
-      display: "flex", 
-      flexDirection: "row-reverse",
-      justifyContent: "space-between", 
-      alignItems: "center", 
-      padding: "15px 20px", 
-    }}>
-      <Link to="/">
-        <img src={logo} alt="Fazakir Logo" style={{width: "11vw", marginLeft: "1vw"}} />
-      </Link>
+    <>
+      <Navbar>
+        <Container fluid className={styles.navcont}>
+          <Link to="/" className="navbar-brand">
+            <img src={logo} alt="Fazakir Logo" />
+          </Link>
 
-      {/* Navigation Links */}
-      <div style={{ display: "flex", flexDirection: "row-reverse", gap: "2vw", alignItems: "center", marginBottom: "11vw", marginRight: "2vw", fontWeight: "600" }}>
-
-        <Cart /> {/* ✅ Show cart icon with count */}
-
-        {user ? (
-          <>
-            <Link to="/orders" style={{ color: "#a38483", textDecoration: "none" }}>الطلبـــات</Link>
-            <Link to="/account" style={{ color: "#a38483", textDecoration: "none" }}>الحســـاب</Link>
-            {user.is_admin && (
-              <Link to="/admin" style={{ color: "#a38483", textDecoration: "none" }}>لوحة تحكم الأدمن</Link>
+          {/* Desktop Links */}
+          <div className={styles.desknav}>
+            <Cart />
+            {user ? (
+              <>
+                <Link to="/orders" className={styles.links}>الطلبـــات</Link>
+                <Link to="/account" className={styles.links}>الحســـاب</Link>
+                {user.is_admin && (
+                  <Link to="/admin" className={styles.links}>لوحة تحكم الأدمن</Link>
+                )}
+                <button onClick={handleLogout}>
+                  الـخـــروج
+                </button>
+              </>
+            ) : (
+              <Link to="/login" className={styles.links}>تسجيل الدخول</Link>
             )}
-            <button 
-              onClick={handleLogout} 
-              style={{ 
-                background: "red", 
-                color: "#fff", 
-                border: "none", 
-                padding: "8px 12px", 
-                cursor: "pointer", 
-                borderRadius: "5px" 
-              }}>
-              الـخـــروج
+          </div>
+
+          <div className={styles.mobnav}>
+            <Cart />
+  
+            {/* Toggle Button for Mobile */}
+            <button onClick={() => setShow(true)}>
+              <span className="navbar-toggler-icon"></span>
             </button>
-          </>
-        ) : (
-          <Link to="/login" style={{ color: "#a38483", textDecoration: "none" }}>تسجيل الدخول</Link>
-        )}
-      </div>
-    </nav>
+          </div>
+        </Container>
+      </Navbar>
+
+      {/* Mobile Sidebar Offcanvas */}
+      <Offcanvas
+        show={show}
+        onHide={() => setShow(false)}
+        placement="end"
+        className={styles.offcanvas}
+      >
+        <Offcanvas.Header closeButton>
+        </Offcanvas.Header>
+        <Offcanvas.Body className={styles.offcanvasbody}>
+          {user ? (
+            <>
+              <Link to="/orders" onClick={() => setShow(false)} className={styles.links}>الطلبـــات</Link>
+              <Link to="/account" onClick={() => setShow(false)} className={styles.links}>الحســـاب</Link>
+              {user.is_admin && (
+                <Link to="/admin" onClick={() => setShow(false)} className={styles.links}>لوحة تحكم الأدمن</Link>
+              )}
+              <Button onClick={handleLogout}>
+                الـخـــروج
+              </Button>
+            </>
+          ) : (
+            <Link to="/login" onClick={() => setShow(false)}>تسجيل الدخول</Link>
+          )}
+        </Offcanvas.Body>
+      </Offcanvas>
+    </>
   );
 };
 
-export default Navbar;
+export default NavbarComponent;

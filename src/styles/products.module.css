@@ -1,31 +1,102 @@
-.filtertitle {
-    text-align: right;
-    margin-right: 2vw;
+/*.sidebarContainer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100vh;
+  z-index: 1000;
+  display: flex;
+  align-items: flex-start;
+}
+
+.sidebar {
+  width: 270px;
+  background-color: rgba(255, 213, 213, 0.8);
+  height: 100vh;
+  transform: translateX(100%);
+  transition: transform 0.3s ease;
+  box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.sidebar.open {
+  transform: translateX(0);
+}
+
+.sidebar select, button {
+  position: relative;
+  z-index: 2;
+}
+
+.sidebar img {
+  position: absolute;
+  right: -8vw;
+  top: 10vw;
+  width: 40vw;
+  opacity: 0.5;
+}
+
+.sidebarToggle {
+  position: fixed;
+  top: 170px;
+  right: 0;
+  transform: translateX(38%) rotate(-90deg) !important;
+  transition: right 0.3s ease;
+  background-color: #ffd5d5;
+  color: #a38483;
+  border: none;
+  cursor: pointer;
+  padding: 1vw 2vw;
+  z-index: 1001;
+  border-radius: 5px 5px 0 0;
+}
+
+.sidebarToggle.open {
+  right: 270px;
+}
+
+.overlay {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 100%;
+  height: 100vh;
+  z-index: 999;
+}*/
+
+.sidebutton {
+  position: fixed;
+  top: 10vw;
+  right: 0;
+  transform: translateX(-30%) rotate(-90deg);
+  transform-origin: right top;
+  z-index: 1051;
+  transition: right 0.3s ease-in-out !important;
+}
+
+.sidebuttonShifted {
+  right: 250px; /* same as Offcanvas width */
+}
+
+.Offcanvas {
+  width: 250px !important;
 }
 
 .filter {
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    align-items: center;
-    gap: 1vw;
+  margin-top: 4vw;
 }
 
 .filter select {
-    width: 10vw;
-    background-color: #ffd5d5;
-    color: #a38483;
-    font-weight: 600;
-}
-
-.sortprice {
-    width: 16vw !important;
+  width: 16vw;
+  background-color: white;
+  color: #a38483;
+  font-weight: 600;
+  margin: 1vw;
 }
 
 .filter button {
-    background-color: white;
-    color: #a38483;
-    border-radius: 0;
-    font-size: 1.2rem;
-    font-weight: 100;
+  background-color: rgba(255, 213, 213, 0.1);
+  color: #a38483;
+  border-radius: 0;
+  font-size: 1.2rem;
 }

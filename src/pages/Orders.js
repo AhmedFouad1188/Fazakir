@@ -6,6 +6,7 @@ import EditOrderModal from "../components/editOrderModal";
 import { toast } from "react-toastify";
 import { confirmAlert } from 'react-confirm-alert';
 import 'react-confirm-alert/src/react-confirm-alert.css';
+import styles from "../styles/orders.module.css";
 
 const Orders = () => {
   const dispatch = useDispatch();
@@ -85,39 +86,36 @@ const Orders = () => {
   if (error) return <div>Error: {error}</div>;
 
   return (
-    <div className="p-4">
-      <h2 className="text-xl font-bold mb-4">Your Orders</h2>
+    <div className={styles.container}>
+      <h2>طلبـــــاتــك</h2>
       {orders.map((order) => (
-        <div key={order.id} className="border rounded p-4 mb-4">
-          <p><strong>Order ID:</strong> {order.id}</p>
-          <p><strong>Status:</strong> {order.status}</p>
-          <p><strong>Created at:</strong> {new Date(order.created_at).toLocaleString()}</p>
-          <p><strong>Total:</strong> {order.total_price}</p>
-          <p><strong>Payment Method:</strong> {order.payment_method}</p>
-          <ul className="mt-2">
+        <div key={order.id} className={styles.order}>
+          <p><strong>رقم الطلب :</strong> {order.id}</p>
+          <p><strong>حالة الطلب :</strong> {order.status}</p>
+          <p><strong>وقت الطلب :</strong> {new Date(order.created_at).toLocaleString()}</p>
+          <p><strong>إجمالى :</strong> {order.total_price}</p>
+          <p><strong>طريقة الدفع :</strong> {order.payment_method}</p>
+          <div className={styles.orderdet}>
             {order.items.map((item) => (
-              <li key={item.product_id}>
+              <div key={item.product_id}>
                 <img
                   src={item.image_url && item.image_url.startsWith("http") ? item.image_url : `http://localhost:5000${item.image_url || ""}`}
                   alt={item.name}
-                  style={{ width: "100px", height: "100px", objectFit: "cover", borderRadius: "5px", marginRight: "15px", cursor: "pointer" }}
                   onClick={() => navigate(`/product/${item.product_id}`)}
                 />
                 {item.name} - {item.quantity} × {item.price}
-              </li>
+              </div>
             ))}
-          </ul>
+          </div>
           {order.payment_method === "Cash on Delivery" && order.status === "placed" && (
             <>
               <button
                 onClick={() => handleEditClick(order)}
-                className="mt-2 bg-yellow-500 text-white px-4 py-1 rounded"
               >
                 Edit
               </button>
               <button
                 onClick={() => handleCancel(order)}
-                className="ml-2 mt-2 bg-red-600 text-white px-4 py-1 rounded"
               >
                 Cancel
               </button>
@@ -127,7 +125,6 @@ const Orders = () => {
             <>
               <button
                 onClick={() => handleCancel(order)}
-                className="ml-2 mt-2 bg-red-600 text-white px-4 py-1 rounded"
               >
                 Cancel
               </button>

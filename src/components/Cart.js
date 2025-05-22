@@ -7,7 +7,7 @@ const Cart = () => {
   const totalQuantity = cart?.totalQuantity || 0; // ✅ Safe access
 
   return (
-    <div style={{ position: "relative", padding: "10px" }}>
+    <div className="carticon">
       <Link to="/cart" style={{ textDecoration: "none", color: "#a38483" }}>
         🛒 {totalQuantity} {/* ✅ Display cart count safely */}
       </Link>

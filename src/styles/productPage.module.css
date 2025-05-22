@@ -1,81 +1,79 @@
-/*.container {
-    display: flex;
-    flex-direction: row-reverse;
-    justify-content: center;
-    gap: 15vw;
+.product {
+  display: flex;
+  flex-direction: row;
+  margin: 0 3vw;
+  gap: 1vw;
 }
 
-.container img {
-    width: 25vw;
+.thumbSwiper {
+  width: 10vw;
+  height: 29vw;
 }
 
-.container div {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
+.thumbnail {
+  width: 7vw;
+  border: 2px solid transparent;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: border 0.2s;
 }
 
-.container select {
-    width: 15vw !important;
-    margin-top: 1vw;
-    background-color: #e7c9b7;
-    color: #a38483;
-    font-weight: 600;
+.thumbnail:hover {
+  border-color: #555;
 }
 
-.container button {
-    background-color: #ffd5d5;
-    color: #a38483;
-    padding: 1vw 2vw;
-}*/
+.swiper-slide-thumb-active .thumbnail {
+  border-color: #000;
+}
 
-.container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 2rem;
-    margin: 2rem;
-  }
-  
-  .imageSection {
-    flex: 1;
-    min-width: 300px;
-  }
-  
-  .mainImage {
-    width: 100%;
-    max-width: 500px;
-    object-fit: contain;
-    border-radius: 10px;
-    border: 1px solid #ddd;
-  }
-  
-  .thumbnailContainer {
-    display: flex;
-    gap: 10px;
-    margin-top: 10px;
-    flex-wrap: wrap;
-  }
-  
-  .thumbnail {
-    width: 60px;
-    height: 60px;
-    object-fit: cover;
-    cursor: pointer;
-    border-radius: 5px;
-    border: 2px solid transparent;
-    transition: border 0.2s;
-  }
-  
-  .thumbnail:hover {
-    border-color: #aaa;
-  }
-  
-  .active {
-    border-color: #333;
-  }
-  
-  .details {
-    flex: 1;
-    min-width: 300px;
-  }
-  
+.mainSwiper {
+  width: 35vw;
+  border-radius: 10px;
+}
+
+.mainImage {
+  width: 100%;
+  border-radius: 10px;
+}
+
+.details {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 50vw;
+  padding: 2vw 3vw;
+  position: relative;
+}
+
+.details *:not(img) {
+  position: relative;
+  z-index: 2;
+}
+
+.details img {
+  position: absolute;
+  width: 30vw;
+  left: -7vw;
+  top: 5vw;
+  opacity: 0.6;
+}
+
+.details select {
+  width: 15vw;
+  margin-bottom: 1vw;
+  background-color: #e7c9b7;
+}
+
+.button {
+  background-color: #ffd5d5;
+  width: 15vw;
+}
+
+.related {
+  margin-top: 5vw;
+}
+
+.related>:not(h2) {
+  background-color: #ffd5d5;
+  padding: 3vw 0;
+}

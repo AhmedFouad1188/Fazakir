@@ -268,6 +268,29 @@ router.get("/:id", async (req, res) => {
   }
 });
 
+router.get('/:category/:excludeId', async (req, res) => {
+  const { category, excludeId } = req.params;
+  try {
+    const [products] = await db.execute(
+      `SELECT 
+         p.*, 
+         (SELECT image_url 
+          FROM product_images 
+          WHERE product_id = p.product_id 
+          ORDER BY image_id ASC 
+          LIMIT 1) AS image_url
+       FROM products p
+       WHERE p.category = ? AND p.product_id != ?
+       LIMIT 4`,
+      [category, excludeId]
+    );
+    
+    res.json(products);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch related products" });
+  }
+});
+
 // ✅ Update Product
 router.put(
   "/:product_id",

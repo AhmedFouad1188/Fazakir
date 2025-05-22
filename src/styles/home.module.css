@@ -3,46 +3,87 @@
     src: url('../assets/fonts/Farsi_Simple_Bold.ttf') format('truetype');
 }
 
-.hero {
+.container {
+    position: relative;
+    overflow-x: hidden;
+}
+
+.background {
+    width: 85vw;
+    position: absolute;
+    bottom: 2vw;
+    left: -30vw;
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.herocont {
+    position: relative;
     width: 100vw;
-    margin-top: -11vw;
-    border-radius: 50vw 0 0 0;
+    height: 60vw;
+    margin-top: -7vw;
+}
+
+.hero {
+    width: 100%;
+    height: 100%;
+    border-radius: 30vw 0 0 0;
+}
+
+.herocont::before {
+    content: "";
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to top, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0), rgba(255, 255, 255, 0));
 }
 
 .productnav {
-    float: right;
-    margin: 5vw 1vw 0 0;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+}
+
+.subnav {
+    width: 75vw;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 2vw;
+    margin-right: -10vw;
 }
 
 span {
-    margin: 1vw;
-    font-size: 1.5rem;
+    font-size: 1rem;
     color: #ffffff;
     background-color: #e7c9b7;
-    padding: 1vw 2vw;
+    padding: 1.5vw 2vw;
     border-radius: 10vw;
     cursor: pointer;
 }
 
 .all {
-    padding: 1.5vw 4vw;
+    height: 15vw;
+    padding: 3vw 5vw;
     background-color: #a38483;
-    font-size: 1.9rem;
-    margin-left: 3vw;
+    font-size: 1.4rem;
+    transform: rotate(-90deg);
+    margin-right: -7vw;
 }
 
 .introtitle {
     font-family: "farsi";
-    font-size: 7vw;
+    font-size: 2.4rem;
     color: #e7c9b7;
-    margin: 3vw 0 0 0;
+    margin-top: 9vw;
 }
 
 .introbody {
-    width: 60vw;
-    margin: auto;
-    line-height: 3vw;
-    position: relative;
+    font-size: 1.1rem;
+    padding: 0 5vw;
 }
 
 .introbody p {
@@ -50,42 +91,41 @@ span {
     z-index: 2;
 }
 
-.introbody img {
-    width: 40vw;
-    position: absolute;
-    top: -5vw;
-    right: 50vw;
-    opacity: 0.6;
-}
-
 .faq {
     display: flex;
     flex-direction: column;
-    margin-top: 7vw;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 3vw;
+    margin-top: 10vw;
+    position: relative;
+    z-index: 2;
 }
 
 .faq .all {
-    text-align: center;
-    width: 20vw;
+    transform: none;
+    width: 70vw;
 }
 
-.faq span {
-    width: 60vw;
+.faq span:not(.faq .all) {
+    width: 85vw;
     text-align: right;
+    padding: 2vw 10vw;
+    margin-right: -5vw;
 }
 
 .special {
     display: flex;
     flex-direction: row;
-    align-items: stretch;
-    margin-top: 10vw;
+    margin-top: 15vw;
     background-color: #a38483;
 }
 
 .special span {
-    font-size: 4vw;
+    font-size: 1.8rem;
     text-align: right;
-    padding: 3vw 5vw 3vw 15vw;
+    padding: 2.5vw 8vw;
+    width: 97vw;
     font-weight: 600;
     color: #a38483;
     cursor: default;
@@ -93,12 +133,47 @@ span {
     align-self: flex-end;
     transform: rotate(-90deg);
     transform-origin: bottom left;
-    margin: 0 -32vw 0 17vw;
+    margin: 0 -92vw 0 23vw;
 }
 
 .special form {
     display: flex;
     flex-direction: column;
-    gap: 1.5vw;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 3vw;
     margin: 4vw 0;
+    position: relative;
+    z-index: 2;
+}
+
+.special input, .special textarea, .special select {
+  font-size: 1rem;
+  color: white;
+  text-align: right;
+  background-color: #a38483;
+  border: none;
+  border-color: #e7c9b7;
+  border-style: solid;
+  border-radius: 3vw;
+  padding: 1vw 2vw;
+  width: 50vw;
+}
+
+.special input {
+    padding: 4vw 2vw;
+}
+
+.special input[type="file"] {
+    font-size: 0.65rem;
+    padding: 1vw 2vw 7.5vw 0;
+}
+
+input::placeholder, textarea::placeholder {
+  color: white;
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  box-shadow: 0 0 0.5vw 0.1vw #e7c9b7;
 }

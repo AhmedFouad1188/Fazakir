@@ -70,13 +70,14 @@ const ModernPanel = () => {
                         className="product"
                         onClick={() => navigate(`/product/${product.product_id}`)}
                       >
+                        <div className="imgcont">
                         <img
                           src={product.image_url && product.image_url.startsWith("http") ? product.image_url : `http://localhost:5000${product.image_url || ""}`}
                           alt={product.name}
                         />
-                        <div>
+                        </div>
+                        <div className="detcont">
                         <h3>{product.name}</h3>
-                        <p>{product.description}</p>
                         <p className="price">{product.price}</p>
                         <button onClick={(e) => { e.stopPropagation(); handleAddToCart(product); }}>أضف إلى السلة</button>
                         </div>
