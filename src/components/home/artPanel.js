@@ -5,7 +5,7 @@ import { addToCart } from "../../redux/cartSlice";
 import axios from "axios";
 import { toast } from "react-toastify";
 
-const ModernPanel = () => {
+const ArtPanel = () => {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const user = useSelector((state) => state.auth.user); // ✅ Get logged-in user
@@ -15,7 +15,7 @@ const ModernPanel = () => {
     const fetchModern = async () => {
         setLoading(true);
       try {
-        const res = await axios.get("http://localhost:5000/api/products?category=Modern", { withCredentials: true });  
+        const res = await axios.get("http://localhost:5000/api/products?category=art", { withCredentials: true });  
         if (res.data.length === 0) {
             console.log("No products available.");
           }
@@ -58,7 +58,7 @@ const ModernPanel = () => {
 
     return (
         <div className="container">
-              <h2>لوحات مودرن</h2>
+              <h2>لوحات بطابع فنى</h2>
                 
               <div className="prodcont">
                 {products.length > 0 ? (
@@ -92,4 +92,4 @@ const ModernPanel = () => {
     );
 };
 
-export default ModernPanel;
+export default ArtPanel;

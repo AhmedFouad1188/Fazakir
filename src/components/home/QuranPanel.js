@@ -15,7 +15,7 @@ const QuranPanel = () => {
     const fetchQuran = async () => {
         setLoading(true);
       try {
-        const res = await axios.get("http://localhost:5000/api/products?category=Quran", { withCredentials: true });  
+        const res = await axios.get("http://localhost:5000/api/products?category=quran", { withCredentials: true });  
         if (res.data.length === 0) {
             console.log("No products available.");
           }

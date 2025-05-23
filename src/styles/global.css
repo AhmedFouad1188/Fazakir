@@ -91,70 +91,126 @@ h2, h3 {
 }
 
 button {
-    font-size: 0.9rem;
-    font-weight: 600;
-    background-color: #e7c9b7;
-    color: white;
-    border: none;
-    cursor: pointer;
-    margin-top: 3vw;
+  font-size: 1.1rem;
+  font-weight: 600;
+  background-color: #a38483;
+  color: white;
+  border: none;
+  border-radius: 2vw;
+  cursor: pointer;
+  padding: 2.5vw 5vw;
+  margin-top: 3vw;
 }
 
+.product button {
+  background-color: #e7c9b7;
+  font-size: 1rem;
+  padding: 0;
+}
+
+/* EDIT MODAL */
 .custom-modal-overlay {
-    position: fixed;
-    inset: 0;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 9999;
-  }
-  
-  .custom-modal {
-    background: #fff;
-    padding: 2rem;
-    border-radius: 10px;
-    width: 90%;
-    max-width: 500px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-    max-height: 90vh;
-    overflow-y: auto;
-  }
-  
-  .actions {
-    margin-top: 1.5rem;
-    text-align: right;
-  }
-  
-  .actions button {
-    margin-left: 0.5rem;
-    padding: 0.5rem 1rem;
-    border: none;
-    cursor: pointer;
-    border-radius: 5px;
-  }
-  
-  .actions button:first-child {
-    background-color: #ccc;
-  }
-  
-  .actions button:last-child {
-    background-color: #28a745;
-    color: #fff;
-  }
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
 
-  .spinner {
-    animation: spin 1s linear infinite;
-  }
-  @keyframes spin {
-    100% {
-      transform: rotate(360deg);
-    }
-  }
+.custom-modal {
+  background: #fff;
+  padding: 2rem;
+  border-radius: 10px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  max-height: 90vh;
+  overflow-y: auto;
+}
 
-  .countryselect {
-    width: 90vw;
+.actions {
+  margin-top: 1.5rem;
+  text-align: right;
+}
+
+.actions button {
+  margin-left: 0.5rem;
+  padding: 0.5rem 1rem;
+  border: none;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+.actions button:first-child {
+  background-color: #ccc;
+}
+
+.actions button:last-child {
+  background-color: #28a745;
+  color: #fff;
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  100% {
+    transform: rotate(360deg);
   }
+}
+
+/* Confirm Alert */
+.react-confirm-alert {
+  width: 90vw;
+  display: flex;
+}
+
+.react-confirm-alert-overlay {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.react-confirm-alert-body {
+  font-size: 1.5rem;
+  text-align: right;
+}
+
+.react-confirm-alert-button-group button:first-child {
+  background-color: #0f79fa;
+  font-size: 1rem;
+}
+
+.react-confirm-alert-button-group button:last-child {
+  background-color: red;
+  font-size: 1rem;
+}
+
+.navbar-toggler-icon {
+  background-color: white;
+}
+
+input, select {
+  color: #a38483;
+  border: solid;
+  border-width: 0.5vw;
+  border-radius: 2vw;
+  border-color: #a38483;
+  text-align: right;
+}
+
+input {
+  padding: 5vw 2vw;
+}
+
+select {
+  padding: 2vw;
+}
+
+.countryselect {
+  width: 90vw;
+}
 
 @media (min-width: 1200px) {
   .carticon {

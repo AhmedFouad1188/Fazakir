@@ -188,12 +188,12 @@ const Account = () => {
         <label>علامة مميزة</label>
         <input name="landmark" value={account.landmark} onChange={handleChange} />
 
-        <button onClick={handleSave} disabled={loading} style={{ marginTop: 10 }}>
+        <button onClick={handleSave} disabled={loading}>
           {loading ? "جارى الحفظ..." : "حفظ"}
         </button>
       </div>
 
-      <button onClick={handleSoftDelete}>
+      <button onClick={handleSoftDelete} className={styles.cancelacc}>
         إلغاء الحساب
       </button>
     </div>

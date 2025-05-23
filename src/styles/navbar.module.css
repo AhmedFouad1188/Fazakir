@@ -23,6 +23,10 @@
     gap: 5vw;
 }
 
+.mobnav button {
+    background-color: white;
+}
+
 .offcanvas {
     width: 50vw !important;
 }

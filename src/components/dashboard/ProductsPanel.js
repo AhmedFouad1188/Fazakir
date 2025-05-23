@@ -5,6 +5,7 @@ import { toast } from "react-toastify";
 import { FaSpinner } from "react-icons/fa";
 import { confirmAlert } from 'react-confirm-alert';
 import 'react-confirm-alert/src/react-confirm-alert.css';
+import styles from "../../styles/productspanel.module.css";
 
 const ProductsPanel = () => {
   const [products, setProducts] = useState([]);
@@ -98,11 +99,11 @@ const ProductsPanel = () => {
           formData.append("remainingImages", url);
         
             confirmAlert({
-              title: `Update ${product.name} ?`,
-              message: `Are you sure you want to update ${product.name} ?`,
+              title: `تحديث ${product.name} ؟`,
+              message: `تأكيد تحديث ${product.name} ؟`,
               buttons: [
                 {
-                  label: 'Yes',
+                  label: 'نعم',
                   onClick: async () => {
 
                     await axios.put(`http://localhost:5000/api/products/${editingProductId}`, formData, {
@@ -114,7 +115,7 @@ const ProductsPanel = () => {
                   }
                 },
                 {
-                  label: 'No'
+                  label: 'لا'
                   // No action needed; this closes the dialog
                 }
               ]
@@ -122,11 +123,11 @@ const ProductsPanel = () => {
         });
       } else {
         confirmAlert({
-          title: 'Add Product ?',
-          message: `Are you sure you want to add this product ?`,
+          title: 'إضافة منتج ؟',
+          message: `هل تريد إضافة هذا المنتج ؟`,
           buttons: [
             {
-              label: 'Yes',
+              label: 'نعم',
               onClick: async () => {
 
                 await axios.post("http://localhost:5000/api/products/add", formData, {
@@ -138,7 +139,7 @@ const ProductsPanel = () => {
               }
             },
             {
-              label: 'No'
+              label: 'لا'
               // No action needed; this closes the dialog
             }
           ]
@@ -178,11 +179,11 @@ const ProductsPanel = () => {
 
   const handleDelete = async (product) => {
     confirmAlert({
-      title: `Delete ${product.name} ?`,
-      message: `Are you sure you want to delete ${product.name} ?`,
+      title: `إزالة ${product.name} ؟`,
+      message: `هل انت متأكد انك تريد إزالة ${product.name} ؟`,
       buttons: [
         {
-          label: 'Yes',
+          label: 'نعم',
           onClick: async () => {
             try {
               await axios.put(`http://localhost:5000/api/products/${product.product_id}/delete`, null, { withCredentials: true });
@@ -194,7 +195,7 @@ const ProductsPanel = () => {
           }
         },
         {
-          label: 'No'
+          label: 'لا'
           // No action needed; this closes the dialog
         }
       ]
@@ -203,11 +204,11 @@ const ProductsPanel = () => {
 
   const handleRestore = async (product) => {
     confirmAlert({
-      title: `Restore ${product.name} ?`,
-      message: `Are you sure you want to restore ${product.name} ?`,
+      title: `إعادة ${product.name} ؟`,
+      message: `هل تريد إعادة ${product.name} ؟`,
       buttons: [
         {
-          label: 'Yes',
+          label: 'نعم',
           onClick: async () => {
             try {
               await axios.put(`http://localhost:5000/api/products/${product.product_id}/restore`, null, { withCredentials: true });
@@ -219,7 +220,7 @@ const ProductsPanel = () => {
           }
         },
         {
-          label: 'No'
+          label: 'لا'
           // No action needed; this closes the dialog
         }
       ]
@@ -242,130 +243,123 @@ const ProductsPanel = () => {
   }
 
   return (
-    <div>
+    <div className={styles.container}>
+      <h2>إضافة منتج</h2>
       <form onSubmit={handleSubmit} encType="multipart/form-data">
-        <input type="text" name="name" placeholder="Product Name" value={product.name} onChange={handleChange} required />
-        <input type="number" name="price" placeholder="Price" value={product.price} onChange={handleChange} required />
-        <input type="text" name="description" placeholder="Description" value={product.description} onChange={handleChange} required />
+        <input type="text" name="name" placeholder="اسم المنتج" value={product.name} onChange={handleChange} required />
+
+        <input type="text" name="description" placeholder="الوصف" value={product.description} onChange={handleChange} required />
+
+        <input type="number" name="price" placeholder="السعر" value={product.price} onChange={handleChange} required />
+
         <select name="category" value={product.category} onChange={handleChange} required>
-          <option value="">Select Category ...</option>
-          <option>Quran</option>
-          <option>Modern</option>
-          <option>Kids</option>
+          <option value="">اختار الفئة</option>
+          <option value="quran">آيات قرآنية</option>
+          <option value="art">طابع فنى</option>
+          <option value="kids">أطفال</option>
         </select>
 
-        <div style={{ marginBottom: "10px" }}>
+        <div>
           {previews.map((src, index) => (
-            <div key={index} style={{ marginBottom: "10px" }}>
+            <div key={index} className={styles.preview}>
               <input
                 type="file"
                 accept="image/*"
                 onChange={(e) => handleImageChange(e, index)}
               />
               {src && <img src={src} alt={`Preview ${index}`} width="100" />}
-              <button type="button" onClick={() => removeInput(index)} style={{ marginLeft: "5px", color: "red" }}>
-                Remove
+              <button type="button" onClick={() => removeInput(index)} style={{backgroundColor: "red"}}>
+                مسح
               </button>
             </div>
           ))}
+
           <button
             type="button"
             onClick={addInput}
             disabled={previews.length >= 5}
             style={{
-              backgroundColor: previews.length >= 5 ? "gray" : "blue",
-              color: "white",
-              padding: "8px 12px",
-              borderRadius: "5px",
-              marginTop: "10px",
+              backgroundColor: previews.length >= 5 ? "gray" : "#a38483",
               cursor: previews.length >= 5 ? "not-allowed" : "pointer",
             }}
           >
-            Add Image
+            إضافة صورة
           </button>
-
         </div>
 
-        <button type="submit" disabled={submitting}>
+        <button type="submit" disabled={submitting} className={styles.add}>
           {submitting ? (
             <>
               <FaSpinner className="spinner" />
               Saving...
             </>
           ) : editingProductId ? (
-            "Update Product"
+            "تحديث منتج"
           ) : (
-            "Add Product"
+            "إضافة منتج"
           )}
         </button>
       </form>
 
-      <h2>Products</h2>
       <input
         type="text"
-        placeholder="Search products..."
+        placeholder="بحث فى المنتجات ..."
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
-        style={{ marginBottom: "10px", padding: "5px", width: "300px" }}
       />
 
-      <table border="1">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Price</th>
-            <th>Description</th>
-            <th>Category</th>
-            <th>Images</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {products
-            .filter((product) =>
-              `${product.name} ${product.description}`.toLowerCase().includes(searchTerm.toLowerCase())
-            )
-            .map((product) => (
-              <tr key={product.product_id}>
-                <td onClick={() => navigate(`/product/${product.product_id}`)} style={{ cursor: "pointer" }}>{product.name}</td>
-                <td>{product.price}</td>
-                <td>{product.description}</td>
-                <td>{product.category}</td>
-                <td style={{ display: "flex", flexWrap: "wrap", gap: "5px" }}>
+      <div>
+        {products
+          .filter((product) =>
+            `${product.name} ${product.description}`.toLowerCase().includes(searchTerm.toLowerCase())
+          )
+          .map((product) => (
+            <div key={product.product_id} className={styles.product}>
+              <div onClick={() => navigate(`/product/${product.product_id}`)} className={styles.productdet}>
+                <p><span>اسم المنتج</span> {product.name}</p>
+                <p><span>الوصف</span> {product.description}</p>
+                <p><span>السعر</span> {product.price}</p>
+                <p><span>الفئة</span> {product.category}</p>
+                <span>الصور</span>
+                <div className={styles.images}>
                   {product.image_url &&
                     product.image_url.map((url, idx) => (
                       <img
                         key={`${product.product_id}-${idx}`}
                         src={`http://localhost:5000${url}`}
                         alt={product.name}
-                        width="50"
-                        height="50"
-                        style={{ objectFit: "cover" }}
                       />
-                    ))}
-                </td>
-                <td>
-                  {product.isdeleted ? (
+                    ))
+                  }
+                </div>
+              </div>
+              <div className={styles.actions}> 
+                {product.isdeleted ? (
                     <>
-                      <span style={{ color: "red", fontWeight: "bold" }}>Deleted</span>
-                      <br />
-                      <button onClick={() => handleRestore(product)} style={{ marginTop: "5px", color: "green" }}>
-                        Restore
+                      <p className={styles.deleted}>Deleted</p>
+                      <button onClick={() => handleRestore(product)} className={styles.buttonalign} style={{backgroundColor: "#25b425"}}>
+                        إعادة
                       </button>
                     </>
                   ) : (
                     <>
-                      <button onClick={() => handleEdit(product)}>Edit</button>
-                      <button onClick={() => handleDelete(product)} style={{ marginLeft: "10px", color: "red" }}>
-                        Delete
+                      <button onClick={() => handleDelete(product)} style={{backgroundColor: "red"}}>
+                        مسح
+                      </button>
+                      <button 
+                        onClick={() => { handleEdit(product); window.scrollTo({ top: 0, behavior: "smooth" }) }} 
+                        className={styles.buttonalign} 
+                        style={{backgroundColor: "#0f79fa"}}
+                      >
+                        تعديل
                       </button>
                     </>
                   )}
-                </td>
-              </tr>
-            ))}
-        </tbody>
-      </table>
+              </div>
+            </div>
+          ))
+        }
+      </div>
     </div>
   );
 };

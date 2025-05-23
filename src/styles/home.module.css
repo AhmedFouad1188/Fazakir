@@ -169,7 +169,7 @@ span {
     padding: 1vw 2vw 7.5vw 0;
 }
 
-input::placeholder, textarea::placeholder {
+.special input::placeholder, .special textarea::placeholder {
   color: white;
 }
 

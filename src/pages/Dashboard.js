@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
+import styles from "../styles/dashboard.module.css";
 
 import ProductsPanel from "../components/dashboard/productsPanel";
 import UsersPanel from "../components/dashboard/usersPanel";
@@ -40,58 +41,36 @@ const Dashboard = () => {
   };
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh" }}>
-      {/* Sidebar */}
-      <div style={{ width: "220px", background: "#2d2d2d", color: "#fff", padding: "20px" }}>
-        <h2 style={{ fontSize: "20px", marginBottom: "30px" }}>Admin Dashboard</h2>
+    <div className={styles.container}>
+      <div className={styles.nav}>
         <button
           onClick={() => setActiveTab("products")}
           style={{
-            background: activeTab === "products" ? "#444" : "transparent",
-            color: "#fff",
-            border: "none",
-            padding: "10px 15px",
-            width: "100%",
-            textAlign: "left",
-            cursor: "pointer",
-            marginBottom: "10px",
+            borderBottom: activeTab === "products" ? "solid" : "none"
           }}
         >
-          Products
+          المنتجات
         </button>
         <button
           onClick={() => setActiveTab("users")}
           style={{
-            background: activeTab === "users" ? "#444" : "transparent",
-            color: "#fff",
-            border: "none",
-            padding: "10px 15px",
-            width: "100%",
-            textAlign: "left",
-            cursor: "pointer",
-            marginBottom: "10px",
+            borderBottom: activeTab === "users" ? "solid" : "none"
           }}
         >
-          Users
+          المستخدمين
         </button>
         <button
           onClick={() => setActiveTab("orders")}
           style={{
-            background: activeTab === "orders" ? "#444" : "transparent",
-            color: "#fff",
-            border: "none",
-            padding: "10px 15px",
-            width: "100%",
-            textAlign: "left",
-            cursor: "pointer",
+            borderBottom: activeTab === "orders" ? "solid" : "none"
           }}
         >
-          Orders
+          الطلبات
         </button>
       </div>
 
       {/* Main Content */}
-      <div style={{ flex: 1, padding: "20px" }}>
+      <div>
         {renderPanel()}
       </div>
     </div>

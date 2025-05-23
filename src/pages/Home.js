@@ -7,7 +7,7 @@ import bgimg from '../assets/bgimg.png';
 
 import BestsellingPanel from "../components/home/bestsellingPanel";
 import QuranPanel from "../components/home/quranPanel";
-import ModernPanel from "../components/home/modernPanel";
+import ArtPanel from "../components/home/artPanel";
 import KidsPanel from "../components/home/kidsPanel";
 
 const Home = () => {
@@ -20,8 +20,8 @@ const Home = () => {
         return <BestsellingPanel />;
       case "quran":
         return <QuranPanel />;
-      case "modern":
-        return <ModernPanel />;
+      case "art":
+        return <ArtPanel />;
       case "kids":
         return <KidsPanel />;
       default:
@@ -40,8 +40,8 @@ const Home = () => {
         <div className={styles.subnav}>
         <span onClick={() => setActiveTab("bestselling")}>الأكــثر مبيــعاً</span>
         <span onClick={() => setActiveTab("quran")}>لوحات آيات قرآنية</span>
-        <span onClick={() => setActiveTab("modern")}>لوحات مـــــودرن </span>
-        <span onClick={() => setActiveTab("kids")}>لوحات اطفـــال</span>
+        <span onClick={() => setActiveTab("art")}>لوحات بطابع فنى </span>
+        <span onClick={() => setActiveTab("kids")}>لوحات اطفـال</span>
         </div>
       </div>
 
