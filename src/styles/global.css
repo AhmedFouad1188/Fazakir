@@ -5,40 +5,39 @@
 
 * {
   font-family: 'expoarabic', sans-serif;
-  font-weight: 100;
   user-select: none;
   direction: rtl;
   text-align: center;
 }
 
 body {
-  font-size: 1vw;
+  font-size: 5.7vw;
   color: #a38483;
   padding: 0;
   margin: 0;
+}
+
+img {
+  border-radius: 2vw;
+}
+
+.carticon {
+  margin-top: 1vw;
+}
+
+h2, h3 {
+  font-weight: bold;
+  margin-top: 5vw;
 }
 
 p {
   margin: 0;
 }
 
-.carticon {
-  margin-top: 4vw;
-}
-
-h2, h3 {
-  font-weight: 600;
-  margin: 0;
-}
-
 .container {
   margin-top: 15vw;
   background-color: #ffd5d5;
-  padding: 3vw 0 3vw 0;
-}
-
-.container h2 {
-  background-color: #ffd5d5;
+  padding: 3vw 0;
 }
 
 .prodcont {
@@ -64,42 +63,43 @@ h2, h3 {
 }
 
 .imgcont {
-  align-self: flex-start;
-  border-radius: 50% 50% 0 0;
+  height: 56%;
 }
 
 .imgcont img {
   width: 100%;
+  border-radius: 0;
 }
 
 .detcont {
   margin-top: auto;
-  height: 40%;
-  background-color: #e7c9b7;
-  border-radius: 0 0 50% 50%;
-}
-
-.product h3 {
-  background-color: #e7c9b7;
-  font-size: 1.2rem;
+  height: 45%;
 }
 
 .price {
-  font-size: 1rem;
-  font-weight: 600;
-  margin: 0;
+  font-weight: bold;
 }
 
 button {
   font-size: 1.1rem;
-  font-weight: 600;
-  background-color: #a38483;
+  font-weight: bold;
   color: white;
   border: none;
   border-radius: 2vw;
   cursor: pointer;
   padding: 2.5vw 5vw;
-  margin-top: 3vw;
+}
+
+.good {
+  background-color: #28a745;
+}
+
+.danger {
+  background-color: red;
+}
+
+.cold {
+  background-color: #0f79fa;
 }
 
 .product button {
@@ -191,13 +191,15 @@ button {
   background-color: white;
 }
 
-input, select {
+input, select, .countryselect, textarea {
   color: #a38483;
+  font-weight: bold;
   border: solid;
   border-width: 0.5vw;
   border-radius: 2vw;
   border-color: #a38483;
   text-align: right;
+  width: 90vw;
 }
 
 input {
@@ -205,11 +207,63 @@ input {
 }
 
 select {
-  padding: 2vw;
+  padding: 1.5vw 0;
 }
 
-.countryselect {
+textarea {
+  padding-right: 2vw;
+}
+
+.panelcont {
+  margin-top: 5vw;
+}
+
+.panelcont input {
   width: 90vw;
+}
+
+.paneldet {
+  border: solid;
+  border-color: #a38483;
+  border-radius: 2vw;
+  border-width: 0.5vw;
+  width: 90vw;
+  padding: 3vw;
+  margin: 2vw auto;
+}
+
+.paneldet p {
+  text-align: right;
+  margin: 1vw 0;
+}
+
+.paneldet span {
+  background-color: white;
+  color: #a38483;
+  font-weight: bold;
+}
+
+.showmore {
+  background-color: white;
+  color: #0f79fa;
+  font-size: 1rem;
+  padding: 0;
+}
+
+.arrowIcon {
+  margin-right: 3vw;
+}
+
+.more {
+  margin-top: 2vw;
+}
+
+.more h3 {
+  margin-top: 5vw;
+}
+
+.status {
+  font-weight: bold;
 }
 
 @media (min-width: 1200px) {

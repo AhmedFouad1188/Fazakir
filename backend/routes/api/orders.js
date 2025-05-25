@@ -46,7 +46,7 @@ router.post("/add", authenticateFirebaseToken, async (req, res) => {
         shipping_details.floor,
         shipping_details.apartment,
         shipping_details.landmark,
-        "placed"
+        "new"
       ]
     );
 

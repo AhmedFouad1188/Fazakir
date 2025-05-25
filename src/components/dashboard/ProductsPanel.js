@@ -179,8 +179,8 @@ const ProductsPanel = () => {
 
   const handleDelete = async (product) => {
     confirmAlert({
-      title: `إزالة ${product.name} ؟`,
-      message: `هل انت متأكد انك تريد إزالة ${product.name} ؟`,
+      title: `حذف ${product.name} ؟`,
+      message: `هل انت متأكد انك تريد حذف ${product.name} ؟`,
       buttons: [
         {
           label: 'نعم',
@@ -268,8 +268,8 @@ const ProductsPanel = () => {
                 onChange={(e) => handleImageChange(e, index)}
               />
               {src && <img src={src} alt={`Preview ${index}`} width="100" />}
-              <button type="button" onClick={() => removeInput(index)} style={{backgroundColor: "red"}}>
-                مسح
+              <button type="button" onClick={() => removeInput(index)} className="danger">
+                حذف
               </button>
             </div>
           ))}
@@ -287,16 +287,16 @@ const ProductsPanel = () => {
           </button>
         </div>
 
-        <button type="submit" disabled={submitting} className={styles.add}>
+        <button type="submit" disabled={submitting} className="good">
           {submitting ? (
             <>
               <FaSpinner className="spinner" />
               Saving...
             </>
           ) : editingProductId ? (
-            "تحديث منتج"
+            "تحديث المنتج"
           ) : (
-            "إضافة منتج"
+            "حفظ المنتج"
           )}
         </button>
       </form>
@@ -314,13 +314,13 @@ const ProductsPanel = () => {
             `${product.name} ${product.description}`.toLowerCase().includes(searchTerm.toLowerCase())
           )
           .map((product) => (
-            <div key={product.product_id} className={styles.product}>
-              <div onClick={() => navigate(`/product/${product.product_id}`)} className={styles.productdet}>
+            <div key={product.product_id} className="paneldet">
+              <div onClick={() => navigate(`/product/${product.product_id}`)} style={{ cursor: "pointer" }}>
                 <p><span>اسم المنتج</span> {product.name}</p>
                 <p><span>الوصف</span> {product.description}</p>
                 <p><span>السعر</span> {product.price}</p>
                 <p><span>الفئة</span> {product.category}</p>
-                <span>الصور</span>
+                <p><span>الصور</span></p>
                 <div className={styles.images}>
                   {product.image_url &&
                     product.image_url.map((url, idx) => (
@@ -336,22 +336,21 @@ const ProductsPanel = () => {
               <div className={styles.actions}> 
                 {product.isdeleted ? (
                     <>
-                      <p className={styles.deleted}>Deleted</p>
-                      <button onClick={() => handleRestore(product)} className={styles.buttonalign} style={{backgroundColor: "#25b425"}}>
+                      <p style={{ color: "red", fontWeight: "bold" }}>محذوف</p>
+                      <button onClick={() => handleRestore(product)} className={`${styles.buttonalign} good`}>
                         إعادة
                       </button>
                     </>
                   ) : (
                     <>
-                      <button onClick={() => handleDelete(product)} style={{backgroundColor: "red"}}>
-                        مسح
-                      </button>
                       <button 
                         onClick={() => { handleEdit(product); window.scrollTo({ top: 0, behavior: "smooth" }) }} 
-                        className={styles.buttonalign} 
-                        style={{backgroundColor: "#0f79fa"}}
+                        className="cold"
                       >
                         تعديل
+                      </button>
+                      <button onClick={() => handleDelete(product)} className={`${styles.buttonalign} danger`}>
+                        حذف
                       </button>
                     </>
                   )}

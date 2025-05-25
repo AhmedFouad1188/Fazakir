@@ -2,10 +2,6 @@
     font-size: 1.2rem;
 }
 
-.container h2 {
-    margin-top: 3vw;
-}
-
 .container form {
     display: flex;
     flex-direction: column;
@@ -13,10 +9,6 @@
     align-items: center;
     gap: 5vw;
     margin: 5vw 0;
-}
-
-.container input, .container select {
-    width: 90vw;
 }
 
 .container input[type="file"] {
@@ -38,48 +30,12 @@
     border-width: 0.5vw;
     width: 90vw;
     padding: 3vw;
-    margin: 2vw 0;
-}
-
-.preview img {
-    border-radius: 2vw;
+    margin-bottom: 3vw;
 }
 
 .preview button {
     align-self: flex-end;
     margin-right: auto;
-}
-
-.add {
-    background-color: #25b425;
-}
-
-.product {
-    margin: 5vw auto;
-    border: solid;
-    border-color: #a38483;
-    border-radius: 2vw;
-    border-width: 0.5vw;
-    width: 90vw;
-}
-
-.productdet {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: flex-start;
-    gap: 2vw;
-    padding: 3vw 3vw 0 3vw;
-    cursor: pointer;
-}
-
-.product span {
-    background-color: white;
-    color: #a38483;
-    font-size: 1.2rem;
-    font-weight: bold;
-    padding: 0;
-    margin-left: 2vw;
 }
 
 .images {
@@ -91,9 +47,8 @@
     width: 100%;
 }
 
-.product img {
+.images img {
     width: 26.7vw;
-    border-radius: 2vw;
 }
 
 .actions {
@@ -103,16 +58,6 @@
     align-items: center;
     width: 100%;
     margin-top: 5vw;
-    padding: 0 3vw 3vw 3vw;
-}
-
-.deleted {
-    color: red !important;
-    font-weight: bold;
-}
-
-.actions button {
-    margin: 0;
 }
 
 .actions .buttonalign {

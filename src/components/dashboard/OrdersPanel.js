@@ -4,12 +4,14 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import { confirmAlert } from 'react-confirm-alert';
 import 'react-confirm-alert/src/react-confirm-alert.css';
+import { FaChevronDown, FaChevronUp } from "react-icons/fa";
+import { mapToArabic } from "../../utils/mapToArabic";
 
 const OrdersPanel = () => {
   const [orders, setOrders] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
-  const [expandedOrderId, setExpandedOrderId] = useState(null);
+  const [expandedOrders, setExpandedOrders] = useState({});
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -27,216 +29,178 @@ const OrdersPanel = () => {
     fetchOrders();
   }, []);
 
-  const toggleOrderItems = (orderId) => {
-    setExpandedOrderId((prevId) => (prevId === orderId ? null : orderId));
-  };
-
   const nextStatus = (current) => {
     switch (current) {
-      case "placed": return "preparing";
+      case "new": return "preparing";
       case "preparing": return "out for delivery";
       case "out for delivery": return "delivered";
       default: return null;
     }
-  };  
+  };
+
+  const toggleOrderExpansion = (orderId) => {
+    setExpandedOrders(prev => ({
+      ...prev,
+      [orderId]: !prev[orderId] // Toggle the expanded state for this user
+    }));
+  };
 
   if (loading) return <p>Loading orders...</p>;
 
   return (
-    <div>
-      <h2>Orders</h2>
+    <div className="panelcont">
       {orders.length === 0 ? (
         <p>No orders found.</p>
       ) : (
         <>
           <input
             type="text"
-            placeholder="Search orders..."
+            placeholder="بحث فى الطلبات ..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            style={{ marginBottom: "10px", padding: "5px", width: "300px" }}
           />
-          <table border="1" style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr>
-                <th>Order ID</th>
-                <th>Payment Method</th>
-                <th>Total Price</th>
-                <th>Name</th>
-                <th>Country</th>
-                <th>Mobile</th>
-                <th>Governorate</th>
-                <th>Created at</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {orders
-                .filter((o) =>
-                  `${o.id} ${o.firstname} ${o.lastname} ${o.email} ${o.dial_code}${o.mobile} ${o.status}`
-                    .toLowerCase()
-                    .includes(searchTerm.toLowerCase())
-                )
-                .map((o) => (
-                  <React.Fragment key={o.id}>
-                    <tr
-                      onClick={() => toggleOrderItems(o.id)}
-                      style={{ cursor: "pointer", backgroundColor: expandedOrderId === o.id ? "#f9f9f9" : "white" }}
-                    >
-                      <td>{o.id}</td>
-                      <td>{o.payment_method}</td>
-                      <td>{o.total_price}</td>
-                      <td>{o.firstname} {o.lastname}</td>
-                      <td>{o.country}</td>
-                      <td>{o.dial_code} {o.mobile}</td>
-                      <td>{o.governorate}</td>
-                      <td>{o.created_at}</td>
-                      <td style={{
-                        color:
-                          o.status === "delivered"
-                            ? "green"
-                            : o.status === "cancelled"
-                            ? "red"
-                            : o.status === "placed"
-                            ? "blue"
-                            : "black"
-                      }}>
-                        {o.status}
-                      </td>
-                    </tr>
 
-                    {/* Expanded order items row */}
-                    {expandedOrderId === o.id && (
-                      <tr>
-                        <td colSpan="12">
-                            <table border="1" style={{ width: "100%", marginTop: "10px" }}>
-                              <thead>
-                                <tr>
-                                  <th>Email</th>
-                                  <th>Address</th>
-                                  <th>Landmark</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                  <tr key={o.id}>
-                                    <td>{o.email}</td>
-                                    <td>{o.building} {o.street}, {o.district}, Floor: {o.floor}, Apt: {o.apartment}</td>
-                                    <td>{o.landmark}</td>
-                                  </tr>
-                              </tbody>
-                            </table>
+            {orders
+              .filter((o) =>
+                `${o.id} ${o.firstname} ${o.lastname} ${o.email} ${o.dial_code}${o.mobile} ${o.status}`
+                  .toLowerCase()
+                  .includes(searchTerm.toLowerCase())
+              )
+              .map((o) => {
+                const isExpanded = expandedOrders[o.id] || false;
 
-                          <h4>Order Items</h4>
-                          {o.items && o.items.length > 0 ? (
-                            <><table border="1" style={{ width: "100%", marginTop: "10px" }}>
-                              <thead>
-                                <tr>
-                                  <th>Product</th>
-                                  <th>Quantity</th>
-                                  <th>Price</th>
-                                  <th>Subtotal</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {o.items.map((item, index) => (
-                                  <tr key={index}>
-                                    <td><img
-                                          src={item.image_url && item.image_url.startsWith("http") ? item.image_url : `http://localhost:5000${item.image_url || ""}`}
-                                          alt={item.name}
-                                          style={{ width: "100px", height: "100px", objectFit: "cover", borderRadius: "5px", marginRight: "15px", cursor: "pointer" }}
-                                          onClick={() => navigate(`/product/${item.product_id}`)}
-                                        />{item.name}</td>
-                                    <td>{item.quantity}</td>
-                                    <td>{item.price}</td>
-                                    <td>{item.quantity * item.price}</td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table><div style={{ marginTop: "15px", display: "flex", gap: "10px" }}>
-                                {o.status !== "delivered" && o.status !== "cancelled" && (
-                                  <button
-                                    onClick={async () => {
-                                      const next = nextStatus(o.status);
-                                      if (!next) return;
-
-                                      confirmAlert({
-                                        title: `Mark order as ${next} ?`,
-                                        message: `Are you sure you want to mark this order as ${next} ?`,
-                                        buttons: [
-                                          {
-                                            label: 'Yes',
-                                            onClick: async () => {
-                                              try {
-                                                await axios.put(`http://localhost:5000/api/orders/updateStatus/${o.id}`, { status: next }, { withCredentials: true });
-                                                setOrders((prev) => prev.map((order) => order.id === o.id ? { ...order, status: next } : order
-                                                )
-                                                );
-                                                toast.success(`Order marked as ${next}`);
-                                              } catch {
-                                                toast.error("Failed to update status");
-                                              }
-                                            }
-                                          },
-                                          {
-                                            label: 'No'
-                                            // No action needed; this closes the dialog
-                                          }
-                                        ]
-                                      });
-                                    }}
-                                  >
-                                    Mark as {nextStatus(o.status)}
-                                  </button>
-                                )}
-
-                                {o.status !== "cancelled" && o.status !== "delivered" && (
-                                  <button
-                                    onClick={async () => {
-                                      confirmAlert({
-                                        title: `Cancel order ${o.id} ?`,
-                                        message: `Are you sure you want to cancel order ${o.id} ?`,
-                                        buttons: [
-                                          {
-                                            label: 'Yes',
-                                            onClick: async () => {
-                                              try {
-                                                await axios.put(`http://localhost:5000/api/orders/cancel/${o.id}`, {}, { withCredentials: true });
-                                                setOrders((prev) => prev.map((order) => order.id === o.id ? { ...order, status: "cancelled" } : order
-                                                )
-                                                );
-                                                toast.error("Order cancelled");
-                                              } catch {
-                                                toast.error("Failed to cancel order");
-                                              }
-                                            }
-                                          },
-                                          {
-                                            label: 'No'
-                                            // No action needed; this closes the dialog
-                                          }
-                                        ]
-                                      });
-                                    }}
-                                    style={{ backgroundColor: "#f44336", color: "white", border: "none", padding: "5px 10px" }}
-                                  >
-                                    Cancel Order
-                                  </button>
-                                )}
-                              </div></>
-                          ) : (
-                            <p>No items found for this order.</p>
-                          )}
-                        </td>
-                      </tr>
+                return (
+                  <div key={o.id} className="paneldet">
+                    <div>
+                      <p><span>رقم الطلب</span> {o.id}</p>
+                      <p><span>طريقة الدفع</span> {o.payment_method}</p>
+                      <p><span>الإجمالى</span> {o.total_price}</p>
+                      <p><span>الاسم</span> {o.firstname} {o.lastname}</p>
+                      <p><span>الدولة</span> {o.country}</p>
+                      <p><span>رقم الجوال</span> {o.mobile} <p style={{ display: "inline", direction: "ltr" }}>{o.dial_code}</p></p>
+                      <p><span>المحافظة</span> {o.governorate}</p>
+                      <p><span>تم الطلب فى</span> {o.created_at}</p>
+                      <p className="status" style={{ color: mapToArabic(o.status).color }}><span>حالة الطلب</span> {mapToArabic(o.status).text}</p>
+    
+                      <button 
+                        onClick={() => toggleOrderExpansion(o.id)}
+                        className="showmore"
+                      >
+                        {isExpanded ? (
+                          <>
+                            إخفاء التفاصيل
+                            <FaChevronUp className="arrowIcon" />
+                          </>
+                        ) : (
+                          <>
+                            عرض المزيد
+                            <FaChevronDown className="arrowIcon" />
+                          </>
+                        )}
+                      </button>
+                    </div>
+  
+                    {isExpanded && (
+                      <div className="more">
+                        <p><span>البريد الالكترونى</span> {o.email}</p>
+                        <p><span>العنوان</span> {o.building} {o.street}, {o.district}, Floor: {o.floor}, Apt: {o.apartment}</p>
+                        <p><span>علامة مميزة</span> {o.landmark}</p>
+  
+                        {o.items && o.items.length > 0 ? (
+                          <>
+                            <h3>محتوى الطلب</h3>
+                            {o.items.map((item, index) => (
+                              <div key={index} style={{ margin: "5vw auto"}}>
+                                <p><img
+                                      src={item.image_url && item.image_url.startsWith("http") ? item.image_url : `http://localhost:5000${item.image_url || ""}`}
+                                      alt={item.name}
+                                      style={{ width: "25vw", margin: "0 0 2vw 2vw" }}
+                                      onClick={() => navigate(`/product/${item.product_id}`)}
+                                    /> {item.name}</p>
+                                <p><span>الكمية</span> {item.quantity}</p>
+                                <p><span>سعر القطعة</span> {item.price}</p>
+                              </div>
+                            ))}
+                          </>
+                        ) : (
+                          <p>No items found for this order.</p>
+                        )};
+  
+                        {o.status !== "delivered" && o.status !== "cancelled" && (
+                          <button
+                            onClick={async () => {
+                              const next = nextStatus(o.status);
+                              if (!next) return
+                              confirmAlert({
+                                title: `تغيير حالة الطلب إلى ${next} ؟`,
+                                message: `هل تريد تغيير حالة الطلب إلى ${next} ؟`,
+                                buttons: [
+                                  {
+                                    label: 'نعم',
+                                    onClick: async () => {
+                                      try {
+                                        await axios.put(`http://localhost:5000/api/orders/updateStatus/${o.id}`, { status: next }, { withCredentials: true });
+                                        setOrders((prev) => prev.map((order) => order.id === o.id ? { ...order, status: next } : order
+                                        )
+                                        );
+                                        toast.success(`Order marked as ${next}`);
+                                      } catch {
+                                        toast.error("Failed to update status");
+                                      }
+                                    }
+                                  },
+                                  {
+                                    label: 'لا'
+                                    // No action needed; this closes the dialog
+                                  }
+                                ]
+                              });
+                            }}
+                          >
+                            تغيير إلى <span>{mapToArabic(nextStatus(o.status)).text}</span>
+                          </button>
+                        )}
+  
+                        {o.status !== "cancelled" && o.status !== "delivered" && (
+                          <button
+                            onClick={async () => {
+                              confirmAlert({
+                                title: `إلغاء طلب رقم ${o.id} ؟`,
+                                message: `هل تريد إلغاء طلب رقم ${o.id} ؟`,
+                                buttons: [
+                                  {
+                                    label: 'نعم',
+                                    onClick: async () => {
+                                      try {
+                                        await axios.put(`http://localhost:5000/api/orders/cancel/${o.id}`, {}, { withCredentials: true });
+                                        setOrders((prev) => prev.map((order) => order.id === o.id ? { ...order, status: "cancelled" } : order
+                                        )
+                                        );
+                                        toast.error("Order cancelled");
+                                      } catch {
+                                        toast.error("Failed to cancel order");
+                                      }
+                                    }
+                                  },
+                                  {
+                                    label: 'لا'
+                                    // No action needed; this closes the dialog
+                                  }
+                                ]
+                              });
+                            }}
+                          >
+                            إلغاء الطلب
+                          </button>
+                        )}
+                      </div>
                     )}
-                  </React.Fragment>
-                ))}
-            </tbody>
-          </table>
+                  </div>
+              )})
+            }
         </>
       )}
     </div>
-  );
-};
+)}
 
 export default OrdersPanel;

@@ -46,7 +46,7 @@
 }
 
 .subnav {
-    width: 75vw;
+    width: 80vw;
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
@@ -56,33 +56,32 @@
     margin-right: -10vw;
 }
 
-span {
-    font-size: 1rem;
-    color: #ffffff;
+.container span {
+    color: white;
     background-color: #e7c9b7;
-    padding: 1.5vw 2vw;
     border-radius: 10vw;
     cursor: pointer;
+    font-size: 1.08rem;
+    padding: 1.5vw;
 }
 
-.all {
+.container .all {
     height: 15vw;
-    padding: 3vw 5vw;
+    padding: 2vw 5vw;
     background-color: #a38483;
-    font-size: 1.4rem;
     transform: rotate(-90deg);
-    margin-right: -7vw;
+    margin-right: -10vw;
+    font-size: 1.5rem;
 }
 
 .introtitle {
     font-family: "farsi";
-    font-size: 2.4rem;
     color: #e7c9b7;
-    margin-top: 9vw;
+    margin: 15vw 0 5vw 0;
+    font-size: 2.4rem;
 }
 
 .introbody {
-    font-size: 1.1rem;
     padding: 0 5vw;
 }
 
@@ -105,6 +104,7 @@ span {
 .faq .all {
     transform: none;
     width: 70vw;
+    margin-right: -7vw;
 }
 
 .faq span:not(.faq .all) {
@@ -124,16 +124,15 @@ span {
 .special span {
     font-size: 1.8rem;
     text-align: right;
-    padding: 2.5vw 8vw;
-    width: 97vw;
-    font-weight: 600;
+    padding: 2.5vw 10vw 2.5vw 47vw;
+    font-weight: bold;
     color: #a38483;
     cursor: default;
     border-radius: 0 10vw 10vw 0;
     align-self: flex-end;
     transform: rotate(-90deg);
     transform-origin: bottom left;
-    margin: 0 -92vw 0 23vw;
+    margin: 0 -98vw 0 23vw;
 }
 
 .special form {
@@ -143,30 +142,20 @@ span {
     align-items: flex-start;
     gap: 3vw;
     margin: 4vw 0;
-    position: relative;
     z-index: 2;
 }
 
 .special input, .special textarea, .special select {
-  font-size: 1rem;
   color: white;
-  text-align: right;
   background-color: #a38483;
-  border: none;
   border-color: #e7c9b7;
-  border-style: solid;
-  border-radius: 3vw;
-  padding: 1vw 2vw;
   width: 50vw;
-}
-
-.special input {
-    padding: 4vw 2vw;
+  font-size: 0.9rem;
 }
 
 .special input[type="file"] {
-    font-size: 0.65rem;
-    padding: 1vw 2vw 7.5vw 0;
+    padding: 1.5vw 1vw 8.5vw 0;
+    font-size: 0.7rem;
 }
 
 .special input::placeholder, .special textarea::placeholder {
@@ -176,4 +165,9 @@ span {
 input:focus, textarea:focus, select:focus {
   outline: none;
   box-shadow: 0 0 0.5vw 0.1vw #e7c9b7;
+}
+
+.container button[type="submit"] {
+    background-color: #e7c9b7;
+    color: #a38483;
 }

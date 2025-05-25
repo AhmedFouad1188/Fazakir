@@ -4,17 +4,11 @@
     justify-content: center;
     align-items: center;
     gap: 2vw;
-    font-size: 1rem;
+    padding: 5vw;
 }
 
 .container label {
     align-self: flex-start;
-    margin: 3vw 5vw 0 0;
-}
-
-.container input {
-    width: 90vw;
-    text-align: left;
 }
 
 .mobcont {
@@ -23,29 +17,15 @@
 }
 
 .countrycode {
-    width: 25vw !important;
+    width: 25vw;
     direction: ltr;
-    border-right: none !important;
-    border-radius: 2vw 0 0 2vw !important;
+    border-right: none;
+    border-radius: 2vw 0 0 2vw;
+    text-align: center;
 }
 
 .mobile {
-    width: 65vw !important;
-    border-left: dotted !important;
-    border-radius: 0 2vw 2vw 0 !important;
-}
-
-.container button {
-    width: 35vw;
-    padding: 2vw 0;
-    border-radius: 2vw;
-    background-color: #a38483;
-}
-
-.cancelacc {
-    background-color: red;
-    width: 40vw;
-    padding: 2vw 0;
-    border-radius: 2vw;
-    margin-top: 15vw;
+    width: 65vw;
+    border-left: dotted;
+    border-radius: 0 2vw 2vw 0;
 }
