@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
-import styles from "../styles/dashboard.module.css";
 
 import ProductsPanel from "../components/dashboard/productsPanel";
 import UsersPanel from "../components/dashboard/usersPanel";
@@ -41,8 +40,8 @@ const Dashboard = () => {
   };
 
   return (
-    <div className={styles.container}>
-      <div className={styles.nav}>
+    <div>
+      <div className="dashbuttons">
         <button
           onClick={() => setActiveTab("products")}
           style={{

@@ -70,7 +70,7 @@ const UsersPanel = () => {
             )
             .map((u) => {
               const userOrderCount = orders.filter(order => order.firebase_uid === u.firebase_uid).length;
-              const userOrderPlaced = orders.filter(order => order.firebase_uid === u.firebase_uid && order.status === "placed").length;
+              const userOrderPlaced = orders.filter(order => order.firebase_uid === u.firebase_uid && order.status === "new").length;
               const userOrderDelivered = orders.filter(order => order.firebase_uid === u.firebase_uid && order.status === "delivered").length;
               const userOrderCancelled = orders.filter(order => order.firebase_uid === u.firebase_uid && order.status === "cancelled").length;
               const isExpanded = expandedUsers[u.firebase_uid] || false;
@@ -82,7 +82,7 @@ const UsersPanel = () => {
                     <p><span>الدولة</span> {u.country}</p>
                     <p><span>رقم الجوال</span> {u.mobile} <p style={{ display: "inline", direction: "ltr" }}>{u.dial_code}</p></p>
                     <p><span>البريد الالكترونى</span> {u.email}</p>
-                    <p style={{ color: u.isdeleted ? "red" : "green", fontWeight: "bold" }}><span>الحالة</span> {u.isdeleted ? "حساب لاغى" : "نشط"}</p>
+                    <p style={{ color: u.isdeleted ? "red" : "green", fontWeight: "bold" }}><span>حالة الحساب</span> {u.isdeleted ? "تم الإلغاء" : "نشط"}</p>
   
                     <button 
                       onClick={() => toggleUserExpansion(u.firebase_uid)}

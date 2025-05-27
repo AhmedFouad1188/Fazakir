@@ -88,12 +88,12 @@ const Account = () => {
     setLoading(true);
     try {
       await axios.put("http://localhost:5000/api/auth/accountupdate", account, { withCredentials: true });
-      toast.success(`Account updated successfully`, {
+      toast.success(`تم تحديث الحساب بنجاح`, {
         position: "top-right",
         autoClose: 2000,
       });
     } catch (error) {
-      toast.error("Failed to save changes", {
+      toast.error("لم نتمكن من حفظ التغييرات. حاول مرة اخرى", {
         position: "top-right",
         autoClose: 2000,
       });
@@ -103,11 +103,11 @@ const Account = () => {
 
   const handleSoftDelete = async () => {
         confirmAlert({
-          title: 'Delete Your Account ?',
-          message: `Are you sure you want to delete your account ? Note that you can still recover your account within 30 days from the time of deletion.`,
+          title: 'إلغاء الحساب ؟',
+          message: `هل تريد حقا إلغاء حسابك ؟ يرجى العلم أنه بإمكانك استرجاع حسابك خلال 30 يوم من تاريخ الإلغاء`,
           buttons: [
             {
-              label: 'Yes',
+              label: 'نعم',
               onClick: async () => {
                 try {
                   await axios.post("http://localhost:5000/api/auth/soft-delete", {}, { withCredentials: true });
@@ -127,7 +127,7 @@ const Account = () => {
               }
             },
             {
-              label: 'No'
+              label: 'لا'
               // No action needed; this closes the dialog
             }
           ]
@@ -193,7 +193,7 @@ const Account = () => {
         </button>
       </div>
 
-      <button onClick={handleSoftDelete} className="danger">
+      <button onClick={handleSoftDelete} className={`${styles.cancel} danger`}>
         إلغاء الحساب
       </button>
     </div>

@@ -32,12 +32,12 @@ const Orders = () => {
             onClick: async () => {
               try {
                 await dispatch(cancelOrder({orderId: order.id})).unwrap();
-                toast.error(`Order cancelled successfully`, {
+                toast.success(`تم إلغاء الطلب بنجاح`, {
                   position: "top-right",
                   autoClose: 2000,
                 });
               } catch (error) {
-                toast.error("Failed to cancel order. Try again!", {
+                toast.error("لم نتمكن من إلغاء الطلب. حاول مرة اخرى", {
                   position: "top-right",
                   autoClose: 2000,
                 });
@@ -62,12 +62,13 @@ const Orders = () => {
           onClick: async () => {
             try {
               await dispatch(orderAgain({orderId: order.id})).unwrap();
-              toast.success(`Order placed successfully`, {
+              toast.success(`تم إنشاء الطلب بنجاح`, {
                 position: "top-right",
                 autoClose: 2000,
               });
+              dispatch(fetchOrders());
             } catch (error) {
-              toast.error("Failed to place order. Try again!", {
+              toast.error("لم نتمكن من إنشاء الطلب. حاول مرة اخرى", {
                 position: "top-right",
                 autoClose: 2000,
               });
@@ -90,11 +91,11 @@ const Orders = () => {
       <h2>طلبـــــاتــك</h2>
       {orders.map((order) => (
         <div key={order.id} className="paneldet">
-          <p><span>رقم الطلب :</span> {order.id}</p>
-          <p className="status" style={{ color: mapToArabic(order.status).color }}><span>حالة الطلب :</span> {mapToArabic(order.status).text}</p>
-          <p><span>وقت الطلب :</span> {new Date(order.created_at).toLocaleString()}</p>
-          <p><span>إجمالى :</span> {order.total_price}</p>
-          <p><span>طريقة الدفع :</span> {order.payment_method}</p>
+          <p><span>رقم الطلب</span> {order.id}</p>
+          <p className="status" style={{ color: mapToArabic(order.status).color }}><span>حالة الطلب</span> {mapToArabic(order.status).text}</p>
+          <p><span>وقت الطلب</span> {new Date(order.created_at).toLocaleString()}</p>
+          <p><span>إجمالى</span> {order.total_price}</p>
+          <p><span>طريقة الدفع</span> {order.payment_method}</p>
           <div style={{ marginTop: "5vw" }}>
             {order.items.map((item) => (
               <div key={item.product_id} style={{ display: "flex", flexDirection: "row", justifyContent: "flex-start", alignItems: "center", margin: "3vw 0" }}>
@@ -109,45 +110,45 @@ const Orders = () => {
             ))}
           </div>
 
-          <div style={{ marginTop: "10vw" }}>
-          {order.payment_method === "Cash on Delivery" && order.status === "new" && (
-            <>
-              <button
-                onClick={() => handleEditClick(order)}
-                className="cold"
-              >
-                تعديل الطلب
-              </button>
-              <button
-                onClick={() => handleCancel(order)}
-                className="danger"
-              >
-                إلغاء الطلب
-              </button>
-            </>
-          )}
-
-          {order.payment_method === "Cash on Delivery" && order.status === "preparing" && (
-            <>
-              <button
-                onClick={() => handleCancel(order)}
-                className="danger"
-              >
-                إلغاء الطلب
-              </button>
-            </>
-          )}
-
-          {order.payment_method === "Cash on Delivery" && order.status === "cancelled" && (
-            <>
-              <button 
-                onClick={() => handleOrderAgain(order)}
-                className="good"
-              >
-                اطلب مرة اخرى
-              </button>
-            </>
-          )}
+          <div style={{ marginTop: "10vw", display: "flex", justifyContent: "center" }}>
+            {order.payment_method === "Cash on Delivery" && order.status === "new" && (
+              <>
+                <button
+                  onClick={() => handleEditClick(order)}
+                  className="cold"
+                >
+                  تعديل
+                </button>
+                <button
+                  onClick={() => handleCancel(order)}
+                  className="danger buttonalign"
+                >
+                  إلغاء
+                </button>
+              </>
+            )}
+  
+            {order.payment_method === "Cash on Delivery" && order.status === "preparing" && (
+              <>
+                <button
+                  onClick={() => handleCancel(order)}
+                  className="danger"
+                >
+                  إلغاء الطلب
+                </button>
+              </>
+            )}
+  
+            {order.payment_method === "Cash on Delivery" && order.status === "cancelled" && (
+              <>
+                <button 
+                  onClick={() => handleOrderAgain(order)}
+                  className="good"
+                >
+                  اطلب مرة اخرى
+                </button>
+              </>
+            )}
           </div>
         </div>
       ))}

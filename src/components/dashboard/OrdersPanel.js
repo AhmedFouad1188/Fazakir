@@ -68,6 +68,7 @@ const OrdersPanel = () => {
               )
               .map((o) => {
                 const isExpanded = expandedOrders[o.id] || false;
+                const next = nextStatus(o.status);
 
                 return (
                   <div key={o.id} className="paneldet">
@@ -124,16 +125,17 @@ const OrdersPanel = () => {
                           </>
                         ) : (
                           <p>No items found for this order.</p>
-                        )};
+                        )}
   
+                        <div style={{ display: "flex", marginTop: "10vw" }}>
                         {o.status !== "delivered" && o.status !== "cancelled" && (
                           <button
+                            className="cold"
                             onClick={async () => {
-                              const next = nextStatus(o.status);
                               if (!next) return
                               confirmAlert({
-                                title: `تغيير حالة الطلب إلى ${next} ؟`,
-                                message: `هل تريد تغيير حالة الطلب إلى ${next} ؟`,
+                                title: `تغيير حالة الطلب إلى ${mapToArabic(next).text} ؟`,
+                                message: `هل تريد تغيير حالة الطلب إلى ${mapToArabic(next).text} ؟`,
                                 buttons: [
                                   {
                                     label: 'نعم',
@@ -143,9 +145,9 @@ const OrdersPanel = () => {
                                         setOrders((prev) => prev.map((order) => order.id === o.id ? { ...order, status: next } : order
                                         )
                                         );
-                                        toast.success(`Order marked as ${next}`);
+                                        toast.success(`تم تغيير حالة الطلب إلى ${mapToArabic(next).text}`);
                                       } catch {
-                                        toast.error("Failed to update status");
+                                        toast.error("لم نتمكن من تغيير حالة الطلب. حاول مرة اخرى");
                                       }
                                     }
                                   },
@@ -157,12 +159,13 @@ const OrdersPanel = () => {
                               });
                             }}
                           >
-                            تغيير إلى <span>{mapToArabic(nextStatus(o.status)).text}</span>
+                            {mapToArabic(next).text}
                           </button>
                         )}
   
                         {o.status !== "cancelled" && o.status !== "delivered" && (
                           <button
+                            className="danger buttonalign"
                             onClick={async () => {
                               confirmAlert({
                                 title: `إلغاء طلب رقم ${o.id} ؟`,
@@ -176,9 +179,9 @@ const OrdersPanel = () => {
                                         setOrders((prev) => prev.map((order) => order.id === o.id ? { ...order, status: "cancelled" } : order
                                         )
                                         );
-                                        toast.error("Order cancelled");
+                                        toast.success("تم إلغاء الطلب بنجاح");
                                       } catch {
-                                        toast.error("Failed to cancel order");
+                                        toast.error("لم نتمكن من إلغاء الطلب. حاول مرة اخرى");
                                       }
                                     }
                                   },
@@ -190,9 +193,10 @@ const OrdersPanel = () => {
                               });
                             }}
                           >
-                            إلغاء الطلب
+                            إلغاء
                           </button>
                         )}
+                        </div>
                       </div>
                     )}
                   </div>

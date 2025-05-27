@@ -6,6 +6,7 @@ import { FaSpinner } from "react-icons/fa";
 import { confirmAlert } from 'react-confirm-alert';
 import 'react-confirm-alert/src/react-confirm-alert.css';
 import styles from "../../styles/productspanel.module.css";
+import { mapToArabic } from "../../utils/mapToArabic";
 
 const ProductsPanel = () => {
   const [products, setProducts] = useState([]);
@@ -110,7 +111,7 @@ const ProductsPanel = () => {
                       headers: { "Content-Type": "multipart/form-data" },
                       withCredentials: true,
                     });
-                    toast.success(`${product.name} updated successfully`);
+                    toast.success(`تم تحديث ${product.name} بنجاح`);
                     fetchProducts();
                   }
                 },
@@ -134,7 +135,7 @@ const ProductsPanel = () => {
                   headers: { "Content-Type": "multipart/form-data" },
                   withCredentials: true,
                 });
-                toast.success("Product added successfully");
+                toast.success("تم إضافة المنتج بنجاح");
                 fetchProducts();
               }
             },
@@ -187,10 +188,10 @@ const ProductsPanel = () => {
           onClick: async () => {
             try {
               await axios.put(`http://localhost:5000/api/products/${product.product_id}/delete`, null, { withCredentials: true });
-              toast.success(`${product.name} deleted successfully`);
+              toast.success(`تم حذف ${product.name} بنجاح`);
               fetchProducts();
             } catch (error) {
-              toast.error("Error deleting product. Please try again.");
+              toast.error("لم نتمكن من حذف المنتج. حاول مرة اخرى");
             }
           }
         },
@@ -212,10 +213,10 @@ const ProductsPanel = () => {
           onClick: async () => {
             try {
               await axios.put(`http://localhost:5000/api/products/${product.product_id}/restore`, null, { withCredentials: true });
-              toast.success(`${product.name} restored successfully`);
+              toast.success(`تم إعادة ${product.name} بنجاح`);
               fetchProducts();
             } catch (error) {
-              toast.error("Failed to restore product");
+              toast.error("لم نتمكن من إعادة المنتج. حاول مرة اخرى");
             }
           }
         },
@@ -244,7 +245,7 @@ const ProductsPanel = () => {
 
   return (
     <div className={styles.container}>
-      <h2>إضافة منتج</h2>
+      <h3>إضافة منتج</h3>
       <form onSubmit={handleSubmit} encType="multipart/form-data">
         <input type="text" name="name" placeholder="اسم المنتج" value={product.name} onChange={handleChange} required />
 
@@ -319,7 +320,7 @@ const ProductsPanel = () => {
                 <p><span>اسم المنتج</span> {product.name}</p>
                 <p><span>الوصف</span> {product.description}</p>
                 <p><span>السعر</span> {product.price}</p>
-                <p><span>الفئة</span> {product.category}</p>
+                <p><span>الفئة</span> {mapToArabic(product.category).text}</p>
                 <p><span>الصور</span></p>
                 <div className={styles.images}>
                   {product.image_url &&
@@ -337,7 +338,7 @@ const ProductsPanel = () => {
                 {product.isdeleted ? (
                     <>
                       <p style={{ color: "red", fontWeight: "bold" }}>محذوف</p>
-                      <button onClick={() => handleRestore(product)} className={`${styles.buttonalign} good`}>
+                      <button onClick={() => handleRestore(product)} className="good buttonalign">
                         إعادة
                       </button>
                     </>
@@ -349,7 +350,7 @@ const ProductsPanel = () => {
                       >
                         تعديل
                       </button>
-                      <button onClick={() => handleDelete(product)} className={`${styles.buttonalign} danger`}>
+                      <button onClick={() => handleDelete(product)} className="danger buttonalign">
                         حذف
                       </button>
                     </>

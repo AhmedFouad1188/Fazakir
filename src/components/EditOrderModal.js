@@ -48,7 +48,7 @@ const EditOrderModal = ({ order, onClose }) => {
   };
 
   const handleSave = async () => {
-    const confirmed = window.confirm("Are you sure you want to save changes?");
+    const confirmed = window.confirm("هل تريد حفظ التعديلات على الطلب ؟");
     if (!confirmed) return;
 
     setIsSubmitting(true);
@@ -87,55 +87,54 @@ const EditOrderModal = ({ order, onClose }) => {
   const modalContent = (
     <div className="custom-modal-overlay">
       <div className="custom-modal">
-        <h2>Edit Order #{order.id}</h2>
+        <h3>تعديل طلب رقم {order.id}</h3>
         {items.map((item) => (
-          <div key={item.product_id} className="mb-4 flex items-center justify-between">
+          <div key={item.product_id} className="itemcont">
             <img
               src={item.image_url && item.image_url.startsWith("http") ? item.image_url : `http://localhost:5000${item.image_url || ""}`}
               alt={item.name}
-              style={{ width: "100px", height: "100px", objectFit: "cover", borderRadius: "5px", marginRight: "15px" }}
             />
-            <div className="flex-1">{item.name}</div>
-            <div className="flex items-center space-x-2">
+            {item.name}
+            <div className="quantity">
               <button
                 onClick={() => handleDecrement(item.product_id)}
-                className="px-2 py-1 border rounded"
+                className="cold dec"
               >−</button>
               <input
                 type="number"
                 value={quantities[item.product_id]}
                 readOnly
-                className="w-12 text-center border rounded"
               />
               <button
                 onClick={() => handleIncrement(item.product_id)}
-                className="px-2 py-1 border rounded"
+                className="cold inc"
               >+</button>
             </div>
             <button
               onClick={() => markItemForDeletion(item)}
-              className="ml-3 text-red-600 text-sm"
+              className="danger buttonalign"
             >
-              Delete
+              حذف
             </button>
           </div>
         ))}
 
         {deletedItems.length > 0 && (
-          <div className="text-sm text-red-500 mb-2">
+          <div>
             {deletedItems.length} item{deletedItems.length > 1 ? "s" : ""} will be deleted
           </div>
         )}
 
         <div className="actions">
-          <button onClick={onClose}>
-            Cancel
-          </button>
           <button
             onClick={handleSave}
             disabled={isSubmitting}
+            className="good"
           >
-            {isSubmitting ? "Saving..." : "Save"}
+            {isSubmitting ? "جارى الحفظ ..." : "حفظ"}
+          </button>
+          <button onClick={onClose} className="danger buttonalign">
+            خروج
           </button>
         </div>
       </div>

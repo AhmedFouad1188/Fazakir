@@ -29,3 +29,11 @@
     border-left: dotted;
     border-radius: 0 2vw 2vw 0;
 }
+
+.container button {
+    margin-top: 5vw;
+}
+
+.cancel {
+    margin-top: 10vw;
+}

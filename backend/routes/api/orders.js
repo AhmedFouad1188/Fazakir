@@ -186,12 +186,12 @@ router.put("/:orderId/orderAgain", authenticateFirebaseToken, async (req, res) =
 
     const order = orderRows[0];
 
-    if (order.status === "placed") {
+    if (order.status === "new") {
       return res.status(400).json({ message: "Order already placed" });
     }
 
     await db.execute(
-      `UPDATE orders SET status = 'placed' WHERE id = ? AND firebase_uid = ?`,
+      `UPDATE orders SET status = 'new' WHERE id = ? AND firebase_uid = ?`,
       [orderId, firebaseUID]
     );
 

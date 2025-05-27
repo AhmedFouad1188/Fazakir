@@ -1,14 +1,10 @@
-.container {
-    font-size: 1.2rem;
-}
-
 .container form {
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     gap: 5vw;
-    margin: 5vw 0;
+    margin: 3vw 0 10vw 0;
 }
 
 .container input[type="file"] {
@@ -58,8 +54,4 @@
     align-items: center;
     width: 100%;
     margin-top: 5vw;
-}
-
-.actions .buttonalign {
-    margin-right: auto;
 }
