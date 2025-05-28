@@ -120,6 +120,12 @@ button {
   font-size: 1.15rem;
 }
 
+.warn {
+  color: red;
+  margin: 10vw auto;
+  width: 90vw;
+}
+
 /* EDIT MODAL */
 .custom-modal-overlay {
   position: fixed;
@@ -195,8 +201,14 @@ button {
   display: flex;
 }
 
+.loading {
+  margin: 10vw auto;
+}
+
 .spinner {
   animation: spin 1s linear infinite;
+  font-size: 1.7rem;
+  margin: 5vw;
 }
 
 @keyframes spin {
@@ -246,7 +258,7 @@ input, select, .countryselect, textarea {
 }
 
 input::placeholder, textarea::placeholder {
-  color: #a38483;
+  color: #c0a5a4;
 }
 
 input {
@@ -259,6 +271,18 @@ select {
 
 textarea {
   padding-right: 2vw;
+}
+
+.search {
+  position: sticky;
+  top: 5vw;
+  filter: drop-shadow(0.5vw 0.5vw 1.5vw #a38483);
+}
+
+.clear {
+  position: absolute;
+  left: 8vw;
+  top: 2.5vw;
 }
 
 .panelcont {
@@ -305,6 +329,36 @@ textarea {
 
 .status {
   font-weight: bold;
+}
+
+.pagination {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  margin-top: 10vw;
+  gap: 2vw;
+}
+
+.pagination button {
+  border: solid;
+  border-width: 0.5vw;
+  background-color: white;
+  color: #a38483;
+  padding: 1vw 2vw;
+  font-size: 1rem;
+}
+
+.pagination button.active {
+  background-color: #e1ae8b;
+  border: none;
+  color: white;
+}
+
+.pagination button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 @media (min-width: 1200px) {

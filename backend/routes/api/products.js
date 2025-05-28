@@ -195,44 +195,60 @@ router.get("/bestselling", async (req, res) => {
 // ✅ Get All Products for Admin Dashboard
 router.get("/dashboard_fetch", authenticateFirebaseToken, adminOnly, async (req, res) => {
   try {
-    const [rows] = await db.execute(`
-      SELECT p.*, pi.image_url
+    const { page = 1, limit = 10, search = '' } = req.query;
+    const offset = (page - 1) * limit;
+
+    // Convert to numbers explicitly
+    const numericLimit = Number(limit);
+    const numericOffset = Number(offset);
+
+    let query = `
+      SELECT p.*, GROUP_CONCAT(pi.image_url) AS image_url
       FROM products p
       LEFT JOIN product_images pi ON p.product_id = pi.product_id
-    `);
+      WHERE 1=1
+    `;
 
-    const productsMap = new Map();
+    let countQuery = `SELECT COUNT(*) as total FROM products p WHERE 1=1`;
+    const params = [];
+    const countParams = [];
 
-    rows.forEach((row) => {
-      const {
-        product_id,
-        name,
-        price,
-        description,
-        category,
-        isdeleted,
-        image_url,
-      } = row;
+    // Add search conditions if search term exists
+    if (search) {
+      const searchParam = `%${search}%`;
+      query += `
+        AND (
+          p.name LIKE ? OR 
+          p.description LIKE ?
+        )
+      `;
+      countQuery += `
+        AND (
+          p.name LIKE ? OR 
+          p.description LIKE ?
+        )
+      `;
 
-      if (!productsMap.has(product_id)) {
-        productsMap.set(product_id, {
-          product_id,
-          name,
-          price,
-          description,
-          category,
-          isdeleted,
-          image_url: image_url ? [image_url] : [],
-        });
-      } else {
-        const product = productsMap.get(product_id);
-        if (image_url) {
-          product.image_url.push(image_url);
-        }
-      }
-    });
+      // Add search param 6 times (once for each field)
+      params.push(...Array(2).fill(searchParam));
+      countParams.push(...Array(2).fill(searchParam));
+    }
 
-    res.json(Array.from(productsMap.values()));
+    // Add sorting and pagination
+    query += ` GROUP BY p.product_id ORDER BY p.product_id DESC LIMIT ${numericLimit} OFFSET ${numericOffset}`;
+
+    // Execute queries
+    const [rows] = await db.execute(query, params);
+    const [totalCountResult] = await db.execute(countQuery, countParams);
+    const totalCount = totalCountResult[0].total;
+
+    // Process the rows to split the concatenated image URLs
+    const products = rows.map(row => ({
+      ...row,
+      image_url: row.image_url ? row.image_url.split(',') : []
+    }));
+
+    res.json({ products, totalCount });
   } catch (err) {
     console.error("Database error:", err);
     res.status(500).json({ error: "Database connection failed" });

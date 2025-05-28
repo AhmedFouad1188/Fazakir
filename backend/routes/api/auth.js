@@ -232,9 +232,58 @@ router.post('/recover-account', async (req, res) => {
 
 router.get("/fetchUsers", authenticateFirebaseToken, adminOnly, async (req, res) => {
   try {
-    const [results] = await db.execute("SELECT * FROM users ORDER BY id DESC");
+    const { page = 1, limit = 10, search = '' } = req.query;
+    const offset = (page - 1) * limit;
 
-    res.json(results);
+    // Convert to numbers explicitly
+    const numericLimit = Number(limit);
+    const numericOffset = Number(offset);
+
+    // Base query
+    let query = `
+      SELECT * FROM users 
+      WHERE 1=1
+    `;
+    let countQuery = `SELECT COUNT(*) as total FROM users WHERE 1=1`;
+    const params = [];
+    const countParams = [];
+
+    // Add search conditions if search term exists
+    if (search) {
+      const searchParam = `%${search}%`;
+      query += `
+        AND (
+          firstname LIKE ? OR 
+          lastname LIKE ? OR 
+          email LIKE ? OR 
+          CONCAT(dial_code, mobile) LIKE ? OR 
+          isdeleted LIKE ?
+        )
+      `;
+      countQuery += `
+        AND (
+          firstname LIKE ? OR 
+          lastname LIKE ? OR 
+          email LIKE ? OR 
+          CONCAT(dial_code, mobile) LIKE ? OR 
+          isdeleted LIKE ?
+        )
+      `;
+
+      // Add search param 6 times (once for each field)
+      params.push(...Array(5).fill(searchParam));
+      countParams.push(...Array(5).fill(searchParam));
+    }
+
+    // FIX: Remove parameterization for LIMIT/OFFSET
+    query += ` ORDER BY id DESC LIMIT ${numericLimit} OFFSET ${numericOffset}`;
+
+    // Execute queries
+    const [users] = await db.execute(query, params);
+    const [totalCountResult] = await db.execute(countQuery, countParams);
+    const totalCount = totalCountResult[0].total;
+
+    res.json({users, totalCount});
   } catch (error) {
     console.error("❌ Error fetching users:", error);
     res.status(500).json({ error: "Server error" });

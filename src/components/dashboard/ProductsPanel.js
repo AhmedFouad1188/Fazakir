@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-toastify";
-import { FaSpinner } from "react-icons/fa";
+import { FaSpinner, FaTimes } from "react-icons/fa";
 import { confirmAlert } from 'react-confirm-alert';
 import 'react-confirm-alert/src/react-confirm-alert.css';
 import styles from "../../styles/productspanel.module.css";
@@ -25,11 +25,37 @@ const ProductsPanel = () => {
   const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [productsPerPage] = useState(10); // You can adjust this number
+  const [totalProducts, setTotalProducts] = useState(0);
+
+  // Add debouncing for search
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+
+  useEffect(() => {
+      const timerId = setTimeout(() => {
+        setDebouncedSearchTerm(searchTerm);
+        setCurrentPage(1); // Reset to first page when search changes
+      }, 500);
+  
+      return () => {
+        clearTimeout(timerId);
+      };
+  }, [searchTerm]);
+
   const fetchProducts = async () => {
-    setLoading(true);
     try {
-      const res = await axios.get("http://localhost:5000/api/products/dashboard_fetch", { withCredentials: true });
-      setProducts(res.data);
+      const res = await axios.get("http://localhost:5000/api/products/dashboard_fetch", { 
+        withCredentials: true,
+        params: {
+          page: currentPage,
+          limit: productsPerPage,
+          search: debouncedSearchTerm
+        }
+      });
+      setProducts(res.data.products);
+      setTotalProducts(res.data.totalCount);
     } catch (err) {
       toast.error("Failed to load products");
     } finally {
@@ -39,7 +65,26 @@ const ProductsPanel = () => {
 
   useEffect(() => {
     fetchProducts();
-  }, []);
+  }, [currentPage, productsPerPage, debouncedSearchTerm]);
+
+  // Calculate page numbers
+  const pageNumbers = [];
+  const totalPages = Math.ceil(totalProducts / productsPerPage);
+  
+  // Show limited page numbers (e.g., 5 at a time)
+  let startPage = Math.max(1, currentPage - 2);
+  let endPage = Math.min(totalPages, currentPage + 2);
+  
+  if (currentPage <= 3) {
+    endPage = Math.min(5, totalPages);
+  }
+  if (currentPage >= totalPages - 2) {
+    startPage = Math.max(1, totalPages - 4);
+  }
+  
+  for (let i = startPage; i <= endPage; i++) {
+    pageNumbers.push(i);
+  }
 
   const handleChange = (e) => {
     setProduct({ ...product, [e.target.name]: e.target.value });
@@ -111,8 +156,8 @@ const ProductsPanel = () => {
                       headers: { "Content-Type": "multipart/form-data" },
                       withCredentials: true,
                     });
-                    toast.success(`تم تحديث ${product.name} بنجاح`);
                     fetchProducts();
+                    toast.success(`تم تحديث ${product.name} بنجاح`);
                   }
                 },
                 {
@@ -135,8 +180,8 @@ const ProductsPanel = () => {
                   headers: { "Content-Type": "multipart/form-data" },
                   withCredentials: true,
                 });
-                toast.success("تم إضافة المنتج بنجاح");
                 fetchProducts();
+                toast.success("تم إضافة المنتج بنجاح");
               }
             },
             {
@@ -188,8 +233,8 @@ const ProductsPanel = () => {
           onClick: async () => {
             try {
               await axios.put(`http://localhost:5000/api/products/${product.product_id}/delete`, null, { withCredentials: true });
-              toast.success(`تم حذف ${product.name} بنجاح`);
               fetchProducts();
+              toast.success(`تم حذف ${product.name} بنجاح`);
             } catch (error) {
               toast.error("لم نتمكن من حذف المنتج. حاول مرة اخرى");
             }
@@ -213,8 +258,8 @@ const ProductsPanel = () => {
           onClick: async () => {
             try {
               await axios.put(`http://localhost:5000/api/products/${product.product_id}/restore`, null, { withCredentials: true });
-              toast.success(`تم إعادة ${product.name} بنجاح`);
               fetchProducts();
+              toast.success(`تم إعادة ${product.name} بنجاح`);
             } catch (error) {
               toast.error("لم نتمكن من إعادة المنتج. حاول مرة اخرى");
             }
@@ -236,9 +281,9 @@ const ProductsPanel = () => {
 
   if (loading) {
     return (
-      <div style={{ textAlign: "center", marginTop: "50px" }}>
-        <FaSpinner className="spinner" style={{ fontSize: "30px", animation: "spin 1s linear infinite" }} />
-        <p>Loading products...</p>
+      <div className="loading">
+        <FaSpinner className="spinner" />
+        <p>جارى تحميل المنتجات . . .</p>
       </div>
     );
   }
@@ -280,7 +325,7 @@ const ProductsPanel = () => {
             onClick={addInput}
             disabled={previews.length >= 5}
             style={{
-              backgroundColor: previews.length >= 5 ? "gray" : "#a38483",
+              backgroundColor: previews.length >= 5 ? "gray" : "#0f79fa",
               cursor: previews.length >= 5 ? "not-allowed" : "pointer",
             }}
           >
@@ -302,64 +347,117 @@ const ProductsPanel = () => {
         </button>
       </form>
 
-      <input
-        type="text"
-        placeholder="بحث فى المنتجات ..."
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-      />
+      <div className="search">
+        <input
+          type="text"
+          placeholder="بحث فى المنتجات . . ."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+        {searchTerm && (
+          <FaTimes 
+            className="clear"
+            onClick={() => setSearchTerm('')}
+          />
+        )}
+      </div>
 
-      <div>
-        {products
-          .filter((product) =>
-            `${product.name} ${product.description}`.toLowerCase().includes(searchTerm.toLowerCase())
-          )
-          .map((product) => (
-            <div key={product.product_id} className="paneldet">
-              <div onClick={() => navigate(`/product/${product.product_id}`)} style={{ cursor: "pointer" }}>
-                <p><span>اسم المنتج</span> {product.name}</p>
-                <p><span>الوصف</span> {product.description}</p>
-                <p><span>السعر</span> {product.price}</p>
-                <p><span>الفئة</span> {mapToArabic(product.category).text}</p>
-                <p><span>الصور</span></p>
-                <div className={styles.images}>
-                  {product.image_url &&
-                    product.image_url.map((url, idx) => (
-                      <img
-                        key={`${product.product_id}-${idx}`}
-                        src={`http://localhost:5000${url}`}
-                        alt={product.name}
-                      />
-                    ))
-                  }
+      {products.length === 0 ? (
+        <p className="warn">لم نجد أى منتجات تتوافق مع كلمات البحث</p>
+      ) : (
+        <>
+          {products.map((product) => (
+              <div key={product.product_id} className="paneldet">
+                <div onClick={() => navigate(`/product/${product.product_id}`)} style={{ cursor: "pointer" }}>
+                  <p><span>اسم المنتج</span> {product.name}</p>
+                  <p><span>الوصف</span> {product.description}</p>
+                  <p><span>السعر</span> {product.price}</p>
+                  <p><span>الفئة</span> {mapToArabic(product.category).text}</p>
+                  <p><span>الصور</span></p>
+                  <div className={styles.images}>
+                    {product.image_url &&
+                      product.image_url.map((url, idx) => (
+                        <img
+                          key={`${product.product_id}-${idx}`}
+                          src={`http://localhost:5000${url}`}
+                          alt={product.name}
+                        />
+                      ))
+                    }
+                  </div>
+                </div>
+                <div className={styles.actions}> 
+                  {product.isdeleted ? (
+                      <>
+                        <p style={{ color: "red", fontWeight: "bold" }}>محذوف</p>
+                        <button onClick={() => handleRestore(product)} className="good buttonalign">
+                          إعادة
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button 
+                          onClick={() => { handleEdit(product); window.scrollTo({ top: 0, behavior: "smooth" }) }} 
+                          className="cold"
+                        >
+                          تعديل
+                        </button>
+                        <button onClick={() => handleDelete(product)} className="danger buttonalign">
+                          حذف
+                        </button>
+                      </>
+                    )}
                 </div>
               </div>
-              <div className={styles.actions}> 
-                {product.isdeleted ? (
-                    <>
-                      <p style={{ color: "red", fontWeight: "bold" }}>محذوف</p>
-                      <button onClick={() => handleRestore(product)} className="good buttonalign">
-                        إعادة
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <button 
-                        onClick={() => { handleEdit(product); window.scrollTo({ top: 0, behavior: "smooth" }) }} 
-                        className="cold"
-                      >
-                        تعديل
-                      </button>
-                      <button onClick={() => handleDelete(product)} className="danger buttonalign">
-                        حذف
-                      </button>
-                    </>
-                  )}
-              </div>
-            </div>
-          ))
-        }
-      </div>
+            ))
+          }
+  
+      {/* Enhanced Pagination */}
+          <div className="pagination">
+            <button 
+              onClick={() => setCurrentPage(1)} 
+              disabled={currentPage === 1}
+            >
+              الأولى
+            </button>
+            
+            <button 
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))} 
+              disabled={currentPage === 1}
+            >
+              السابق
+            </button>
+            
+            {startPage > 1 && <span>...</span>}
+            
+            {pageNumbers.map(number => (
+              <button
+                key={number}
+                onClick={() => setCurrentPage(number)}
+                className={currentPage === number ? 'active' : ''}
+              >
+                {number}
+              </button>
+            ))}
+            
+            {endPage < totalPages && <span>...</span>}
+            
+            <button 
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+            >
+              التالي
+            </button>
+            
+            <button 
+              onClick={() => setCurrentPage(totalPages)}
+              disabled={currentPage === totalPages}
+            >
+              الأخيرة
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 };

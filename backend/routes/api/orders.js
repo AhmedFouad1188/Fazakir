@@ -204,7 +204,58 @@ router.put("/:orderId/orderAgain", authenticateFirebaseToken, async (req, res) =
 
 router.get("/fetchAllOrders", authenticateFirebaseToken, adminOnly, async (req, res) => {
   try {
-    const [orders] = await db.execute(`SELECT * FROM orders ORDER BY id DESC`);
+    const { page = 1, limit = 10, search = '' } = req.query;
+    const offset = (page - 1) * limit;
+
+    // Convert to numbers explicitly
+    const numericLimit = Number(limit);
+    const numericOffset = Number(offset);
+
+    // Base query
+    let query = `
+      SELECT * FROM orders 
+      WHERE 1=1
+    `;
+    let countQuery = `SELECT COUNT(*) as total FROM orders WHERE 1=1`;
+    const params = [];
+    const countParams = [];
+
+    // Add search conditions if search term exists
+    if (search) {
+      const searchParam = `%${search}%`;
+      query += `
+        AND (
+          id LIKE ? OR 
+          firstname LIKE ? OR 
+          lastname LIKE ? OR 
+          email LIKE ? OR 
+          CONCAT(dial_code, mobile) LIKE ? OR 
+          status LIKE ?
+        )
+      `;
+      countQuery += `
+        AND (
+          id LIKE ? OR 
+          firstname LIKE ? OR 
+          lastname LIKE ? OR 
+          email LIKE ? OR 
+          CONCAT(dial_code, mobile) LIKE ? OR 
+          status LIKE ?
+        )
+      `;
+
+      // Add search param 6 times (once for each field)
+      params.push(...Array(6).fill(searchParam));
+      countParams.push(...Array(6).fill(searchParam));
+    }
+
+    // FIX: Remove parameterization for LIMIT/OFFSET
+    query += ` ORDER BY id DESC LIMIT ${numericLimit} OFFSET ${numericOffset}`;
+
+    // Execute queries
+    const [orders] = await db.execute(query, params);
+    const [totalCountResult] = await db.execute(countQuery, countParams);
+    const totalCount = totalCountResult[0].total;
 
     for (const order of orders) {
       const [items] = await db.execute(
@@ -215,7 +266,7 @@ router.get("/fetchAllOrders", authenticateFirebaseToken, adminOnly, async (req, 
       order.items = items;
     }
 
-    res.json(orders);
+    res.json({orders, totalCount});
   } catch (error) {
     console.error("Error fetching orders:", error);
     res.status(500).json({ message: "Error fetching orders" });

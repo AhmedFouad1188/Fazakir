@@ -56,7 +56,7 @@ const Dashboard = () => {
             borderBottom: activeTab === "users" ? "solid" : "none"
           }}
         >
-          المستخدمين
+          العملاء
         </button>
         <button
           onClick={() => setActiveTab("orders")}
