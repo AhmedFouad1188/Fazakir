@@ -30,33 +30,69 @@ const fileFilter = (req, file, cb) => {
 
 const upload = multer({ storage, fileFilter });
 
-// ✅ Validation middleware
+// ✅ Validation middleware - UPDATED
 const validateProduct = [
+  // Custom middleware to properly parse form-data
+  (req, res, next) => {
+    try {
+      // If dimensions is a string, parse it
+      if (req.body.dimensions && typeof req.body.dimensions === 'string') {
+        req.body.dimensions = JSON.parse(req.body.dimensions);
+      }
+      next();
+    } catch (err) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid dimensions format"
+      });
+    }
+  },
+
+  // Validation rules
   body("name").trim().notEmpty().withMessage("Name is required"),
-  body("price").isFloat({ gt: 0 }).withMessage("Price must be a positive number"),
   body("description").optional().trim(),
+  body("category").optional().trim(),
+  body("color").optional().trim(),
+  body("dimensions").optional().isArray().withMessage("Dimensions must be an array"),
+  body("dimensions.*.width").isNumeric().withMessage("Width must be a number"),
+  body("dimensions.*.height").isNumeric().withMessage("Height must be a number"),
+  body("dimensions.*.price").isFloat({ gt: 0 }).withMessage("Price must be a positive number"),
+
+  // Validation handler
   (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+      return res.status(400).json({ 
+        success: false,
+        errors: errors.array() 
+      });
     }
     next();
-  },
+  }
 ];
 
 // ✅ Helper to convert uploaded image to WebP
 const convertImageToWebP = async (filePath) => {
   const ext = path.extname(filePath).toLowerCase();
   const baseName = path.basename(filePath, ext);
-  const webpPath = `uploads/${baseName}.webp`;
+  const uploadsDir = path.join(__dirname, '../../uploads');
+  
+  // Ensure uploads directory exists
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+
+  const webpPath = path.join(uploadsDir, `${baseName}.webp`);
 
   if (ext !== ".webp") {
     await sharp(filePath).webp({ quality: 80 }).toFile(webpPath);
-    fs.unlinkSync(filePath);
+    fs.unlinkSync(filePath); // Remove original
+    return `/uploads/${baseName}.webp`; // Return web-accessible path
   } else {
-    fs.renameSync(filePath, webpPath);
+    const newPath = path.join(uploadsDir, `${baseName}${ext}`);
+    fs.renameSync(filePath, newPath);
+    return `/uploads/${baseName}${ext}`;
   }
-  return "/" + webpPath;
 };
 
 // ✅ Create Product
@@ -67,38 +103,84 @@ router.post(
   upload.array("images", 5),
   validateProduct,
   async (req, res) => {
-    const { name, price, description, category } = req.body;
+    const { name, description, category, color } = req.body;
+    let dimensions = [];
+    
+    try {
+      dimensions = req.body.dimensions 
+        ? (typeof req.body.dimensions === 'string' 
+            ? JSON.parse(req.body.dimensions) 
+            : req.body.dimensions)
+        : [];
+    } catch (err) {
+      return res.status(400).json({ error: "Invalid dimensions format" });
+    }
 
     try {
-      // Step 1: Insert the product
-      const [result] = await db.execute(
-        "INSERT INTO products (name, price, description, category) VALUES (?, ?, ?, ?)",
-        [name, price, description, category]
-      );
-      const productId = result.insertId;
+      // Start transaction
+      const connection = await db.getConnection();
+      await connection.beginTransaction();
 
-      // Step 2: Handle images (convert and store paths in `product_images`)
-      const imageUrls = [];
+      try {
+        // 1. Insert product
+        const [productResult] = await connection.execute(
+          "INSERT INTO products (name, description, category, color) VALUES (?, ?, ?, ?)",
+          [name, description, category, color]
+        );
+        const productId = productResult.insertId;
 
-      if (req.files && req.files.length > 0) {
-        for (const file of req.files) {
-          const webpPath = await convertImageToWebP(file.path); // returns /uploads/filename.webp
-          imageUrls.push(webpPath);
+        // 2. Handle dimensions
+        if (dimensions.length) {
+          for (const dim of dimensions) {
+            await connection.execute(
+              "INSERT INTO product_dimensions (product_id, width, height, price) VALUES (?, ?, ?, ?)",
+              [productId, dim.width, dim.height, dim.price]
+            );
+          }
         }
-      } else {
-        imageUrls.push("/uploads/default.png");
+
+        // 3. Handle images
+        const imageUrls = [];
+        
+        if (req.files?.length) {
+          for (const file of req.files) {
+            try {
+              const webpPath = await convertImageToWebP(file.path);
+              imageUrls.push(webpPath);
+              
+              await connection.execute(
+                "INSERT INTO product_images (product_id, image_url) VALUES (?, ?)",
+                [productId, webpPath]
+              );
+            } catch (err) {
+              console.error("Error processing image:", err);
+              // Skip this image but continue with others
+            }
+          }
+        }
+
+        // Add default image if no images were uploaded
+        if (imageUrls.length === 0) {
+          const defaultImage = "/uploads/default.png";
+          await connection.execute(
+            "INSERT INTO product_images (product_id, image_url) VALUES (?, ?)",
+            [productId, defaultImage]
+          );
+          imageUrls.push(defaultImage);
+        }
+
+        await connection.commit();
+        res.status(201).json({ 
+          success: true,
+          product_id: productId,
+          image_urls: imageUrls
+        });
+      } catch (err) {
+        await connection.rollback();
+        throw err;
+      } finally {
+        connection.release();
       }
-
-      // Step 3: Insert images into product_images table
-      const imageInsertPromises = imageUrls.map((url) =>
-        db.execute(
-          "INSERT INTO product_images (product_id, image_url) VALUES (?, ?)",
-          [productId, url]
-        )
-      );
-      await Promise.all(imageInsertPromises);
-
-      res.status(201).json({ product_id: productId });
     } catch (err) {
       console.error("Upload error:", err);
       res.status(500).json({ error: "Failed to create product" });
@@ -109,11 +191,15 @@ router.post(
 // ✅ Get All Products (optionally by category)
 router.get("/", async (req, res) => {
   try {
-    const { category } = req.query;
+    const { page = 1, limit = 20, category, color } = req.query;
+    const offset = (page - 1) * limit;
+    const numericLimit = Number(limit);
+    const numericOffset = Number(offset);
+
+    // Base query with image handling
     let query = `
       SELECT 
-        p.product_id, p.name, p.price, p.description, 
-        p.category, p.isdeleted,
+        p.product_id, p.name, p.category, p.color,
         (
           SELECT pi.image_url 
           FROM product_images pi 
@@ -124,25 +210,53 @@ router.get("/", async (req, res) => {
       FROM products p
       WHERE p.isdeleted = 0
     `;
-    const values = [];
 
+    // Count query for pagination
+    let countQuery = `
+      SELECT COUNT(*) as total 
+      FROM products p
+      WHERE p.isdeleted = 0
+    `;
+
+    const queryParams = [];
+    const countParams = [];
+
+    // Add filters
     if (category) {
       query += " AND p.category = ?";
-      values.push(category);
+      countQuery += " AND p.category = ?";
+      queryParams.push(category);
+      countParams.push(category);
     }
 
-    const [rows] = await db.execute(query, values);
+    if (color) {
+      query += " AND p.color = ?";
+      countQuery += " AND p.color = ?";
+      queryParams.push(color);
+      countParams.push(color);
+    }
 
-    // Assign a default image if none exists
-    const products = rows.map(product => ({
-      ...product,
-      image_url: product.image_url || "/uploads/default.png"
-    }));
+    // Add pagination to main query only
+    query += ` ORDER BY p.product_id DESC LIMIT ? OFFSET ?`;
+    queryParams.push(numericLimit.toString(), numericOffset.toString());
 
-    res.json(products);
+    // Execute queries
+    const [products] = await db.execute(query, queryParams);
+    const [[totalCount]] = await db.execute(countQuery, countParams);
+
+    res.json({
+      products: products,
+      totalCount: totalCount.total
+    });
+
   } catch (err) {
     console.error("Database error:", err);
-    res.status(500).json({ error: "Database connection failed" });
+    res.status(500).json({ 
+      error: "Database operation failed",
+      details: err.message,
+      sql: err.sql,
+      params: err.params
+    });
   }
 });
 
@@ -151,10 +265,7 @@ router.get("/bestselling", async (req, res) => {
   try {
     const [rows] = await db.execute(`
       SELECT 
-        p.product_id, 
-        p.name, 
-        p.price, 
-        p.description, 
+        p.product_id, p.name, 
         (
           SELECT image_url 
           FROM product_images 
@@ -192,25 +303,74 @@ router.get("/bestselling", async (req, res) => {
   }
 });
 
+router.get("/category", async (req, res) => {
+  try {
+    const { category } = req.query;
+    let query = `
+      SELECT 
+        p.product_id, p.name,
+        (
+          SELECT pi.image_url 
+          FROM product_images pi 
+          WHERE pi.product_id = p.product_id 
+          ORDER BY pi.image_id ASC 
+          LIMIT 1
+        ) AS image_url
+      FROM products p
+      WHERE p.isdeleted = 0
+    `;
+    const values = [];
+
+    if (category) {
+      query += " AND p.category = ?";
+      values.push(category);
+    }
+
+    query += " LIMIT 5";
+
+    const [rows] = await db.execute(query, values);
+
+    // Assign a default image if none exists
+    const products = rows.map(product => ({
+      ...product,
+      image_url: product.image_url || "/uploads/default.png"
+    }));
+
+    res.json(products);
+  } catch (err) {
+    console.error("Database error:", err);
+    res.status(500).json({ error: "Database connection failed" });
+  }
+});
+
 // ✅ Get All Products for Admin Dashboard
 router.get("/dashboard_fetch", authenticateFirebaseToken, adminOnly, async (req, res) => {
   try {
     const { page = 1, limit = 10, search = '' } = req.query;
     const offset = (page - 1) * limit;
-
-    // Convert to numbers explicitly
     const numericLimit = Number(limit);
     const numericOffset = Number(offset);
 
+    // Base query with parameter placeholders
     let query = `
-      SELECT p.*, GROUP_CONCAT(pi.image_url) AS image_url
+      SELECT 
+        p.*,
+        (
+          SELECT GROUP_CONCAT(pi.image_url)
+          FROM product_images pi
+          WHERE pi.product_id = p.product_id
+        ) AS image_url,
+        (
+          SELECT GROUP_CONCAT(CONCAT(pd.width, 'x', pd.height, 'x', pd.price))
+          FROM product_dimensions pd
+          WHERE pd.product_id = p.product_id
+        ) AS dimensions
       FROM products p
-      LEFT JOIN product_images pi ON p.product_id = pi.product_id
       WHERE 1=1
     `;
 
     let countQuery = `SELECT COUNT(*) as total FROM products p WHERE 1=1`;
-    const params = [];
+    const queryParams = [];
     const countParams = [];
 
     // Add search conditions if search term exists
@@ -219,39 +379,62 @@ router.get("/dashboard_fetch", authenticateFirebaseToken, adminOnly, async (req,
       query += `
         AND (
           p.name LIKE ? OR 
-          p.description LIKE ?
+          p.description LIKE ? OR
+          p.category LIKE ? OR
+          p.color LIKE ?
         )
       `;
       countQuery += `
         AND (
           p.name LIKE ? OR 
-          p.description LIKE ?
+          p.description LIKE ? OR
+          p.category LIKE ? OR
+          p.color LIKE ?
         )
       `;
-
-      // Add search param 6 times (once for each field)
-      params.push(...Array(2).fill(searchParam));
-      countParams.push(...Array(2).fill(searchParam));
+      
+      // Add search param 4 times (once for each field) to both queries
+      for (let i = 0; i < 4; i++) {
+        queryParams.push(searchParam);
+        countParams.push(searchParam);
+      }
     }
 
-    // Add sorting and pagination
-    query += ` GROUP BY p.product_id ORDER BY p.product_id DESC LIMIT ${numericLimit} OFFSET ${numericOffset}`;
+    // Add pagination to main query only
+    query += ` ORDER BY p.product_id DESC LIMIT ? OFFSET ?`;
+    queryParams.push(numericLimit.toString(), numericOffset.toString());
 
     // Execute queries
-    const [rows] = await db.execute(query, params);
-    const [totalCountResult] = await db.execute(countQuery, countParams);
-    const totalCount = totalCountResult[0].total;
+    const [products] = await db.execute(query, queryParams);
+    const [[totalCount]] = await db.execute(countQuery, countParams);
 
-    // Process the rows to split the concatenated image URLs
-    const products = rows.map(row => ({
-      ...row,
-      image_url: row.image_url ? row.image_url.split(',') : []
+    // Process results
+    const processedProducts = products.map(product => ({
+      ...product,
+      image_url: product.image_url 
+        ? product.image_url.split(',').map(url => url.trim())
+        : ['/uploads/default.png'],
+      dimensions: product.dimensions
+        ? product.dimensions.split(',').map(dim => {
+            const [width, height, price] = dim.split('x');
+            return { width, height, price };
+          })
+        : []
     }));
 
-    res.json({ products, totalCount });
+    res.json({
+      products: processedProducts,
+      totalCount: totalCount.total
+    });
+
   } catch (err) {
     console.error("Database error:", err);
-    res.status(500).json({ error: "Database connection failed" });
+    res.status(500).json({ 
+      error: "Database operation failed",
+      details: err.message,
+      sql: err.sql,
+      params: err.params
+    });
   }
 });
 
@@ -259,25 +442,41 @@ router.get("/dashboard_fetch", authenticateFirebaseToken, adminOnly, async (req,
 router.get("/:id", async (req, res) => {
   const { id } = req.params;
   try {
-    // Fetch product details
-    const [productRows] = await db.execute(
-      "SELECT * FROM products WHERE product_id = ?",
-      [id]
-    );
-    if (productRows.length === 0) {
-      return res.status(404).json({ message: "Product not found" });
-    }
+    // Fetch product details with images and dimensions in a single query
+    const [productRows] = await db.execute(`
+      SELECT 
+        p.product_id, p.name, p.description, p.category,
+        (
+          SELECT GROUP_CONCAT(pi.image_url)
+          FROM product_images pi
+          WHERE pi.product_id = p.product_id
+        ) AS image_url,
+        (
+          SELECT GROUP_CONCAT(CONCAT(pd.width, 'x', pd.height, 'x', pd.price))
+          FROM product_dimensions pd
+          WHERE pd.product_id = p.product_id
+        ) AS dimensions
+      FROM products p
+      WHERE p.product_id = ? AND p.isdeleted = 0
+    `, [id]);
+
     const product = productRows[0];
+    
+    // Process the data
+    const response = {
+      ...product,
+      image_url: product.image_url 
+        ? product.image_url.split(',').map(url => url.trim())
+        : ['/uploads/default.png'],
+      dimensions: product.dimensions
+        ? product.dimensions.split(',').map(dim => {
+            const [width, height, price] = dim.split('x');
+            return { width, height, price };
+          })
+        : []
+    };
 
-    // Fetch associated images
-    const [imageRows] = await db.execute(
-      "SELECT image_url FROM product_images WHERE product_id = ?",
-      [id]
-    );
-    const imageUrls = imageRows.map((row) => row.image_url);
-
-    // Combine product data with image URLs
-    res.json({ ...product, image_url: imageUrls });
+    res.json({ product: response });
   } catch (err) {
     console.error("Server error:", err);
     res.status(500).json({ error: "Server error" });
@@ -289,15 +488,15 @@ router.get('/:category/:excludeId', async (req, res) => {
   try {
     const [products] = await db.execute(
       `SELECT 
-         p.*, 
+         p.product_id, p.name, 
          (SELECT image_url 
           FROM product_images 
           WHERE product_id = p.product_id 
           ORDER BY image_id ASC 
           LIMIT 1) AS image_url
        FROM products p
-       WHERE p.category = ? AND p.product_id != ?
-       LIMIT 4`,
+       WHERE p.category = ? AND p.product_id != ? AND p.isdeleted = 0
+       LIMIT 5`,
       [category, excludeId]
     );
     
@@ -312,88 +511,144 @@ router.put(
   "/:product_id",
   authenticateFirebaseToken,
   adminOnly,
-  upload.array("images", 5), // Up to 5 images
+  upload.array("images", 5),
   validateProduct,
   async (req, res) => {
     const { product_id } = req.params;
-    const { name, price, description, category, remainingImages } = req.body;
+    const { name, description, category, color } = req.body;
+    let dimensions = req.body.dimensions || [];
+    let remainingImages = req.body.remainingImages || [];
 
     try {
+      // Verify product exists
       const [existingProduct] = await db.execute(
         "SELECT * FROM products WHERE product_id = ?",
         [product_id]
       );
-      if (existingProduct.length === 0) {
-        return res.status(404).json({ error: "Product not found" });
+      
+      if (!existingProduct.length) {
+        return res.status(404).json({ 
+          success: false,
+          message: "Product not found" 
+        });
       }
 
-      // Step 1: Fetch existing image URLs from product_images
-      const [existingImages] = await db.execute(
-        "SELECT image_url FROM product_images WHERE product_id = ?",
-        [product_id]
-      );
-      const existingUrls = existingImages.map((img) => img.image_url);
+      // Start transaction
+      const connection = await db.getConnection();
+      await connection.beginTransaction();
 
-      const keepImages = Array.isArray(remainingImages)
-        ? remainingImages
-        : typeof remainingImages === "string"
-        ? [remainingImages]
-        : [];
+      try {
+        // 1. Handle images
+        const keepImages = Array.isArray(remainingImages) 
+          ? remainingImages 
+          : [remainingImages].filter(Boolean);
 
-      // Step 2: Delete removed images from disk and database
-      for (const img of existingUrls) {
-        if (!keepImages.includes(img) && img !== "/uploads/default.png") {
-          const imgPath = path.join(__dirname, "../../", img);
-          if (fs.existsSync(imgPath)) fs.unlinkSync(imgPath);
-          await db.execute(
-            "DELETE FROM product_images WHERE product_id = ? AND image_url = ?",
-            [product_id, img]
+        // Get current images from DB
+        const [existingImages] = await connection.execute(
+          "SELECT image_id, image_url FROM product_images WHERE product_id = ?",
+          [product_id]
+        );
+
+        // Delete images that are no longer needed
+        for (const { image_id, image_url } of existingImages) {
+          if (!keepImages.includes(image_url)) {
+            try {
+              // Delete from filesystem
+              const relativePath = image_url.startsWith('/') 
+                ? image_url.substring(1) 
+                : image_url;
+              const fullPath = path.join(__dirname, '../../', relativePath);
+              
+              if (fs.existsSync(fullPath) && image_url !== "/uploads/default.png") {
+                fs.unlinkSync(fullPath);
+              }
+              
+              // Delete from database
+              await connection.execute(
+                "DELETE FROM product_images WHERE image_id = ?",
+                [image_id]
+              );
+            } catch (err) {
+              console.error(`Error deleting image ${image_url}:`, err);
+              // Continue with other operations
+            }
+          }
+        }
+
+        // Add new images
+        const newImageUrls = [];
+        if (req.files?.length) {
+          for (const file of req.files) {
+            try {
+              const webpPath = await convertImageToWebP(file.path);
+              await connection.execute(
+                "INSERT INTO product_images (product_id, image_url) VALUES (?, ?)",
+                [product_id, webpPath]
+              );
+              newImageUrls.push(webpPath);
+            } catch (err) {
+              console.error("Error processing new image:", err);
+              // Skip this image but continue with others
+            }
+          }
+        }
+
+        // 2. Handle dimensions
+        await connection.execute(
+          "DELETE FROM product_dimensions WHERE product_id = ?",
+          [product_id]
+        );
+
+        if (dimensions.length) {
+          for (const dim of dimensions) {
+            if (!dim.width || !dim.height || !dim.price) continue;
+            await connection.execute(
+              "INSERT INTO product_dimensions (product_id, width, height, price) VALUES (?, ?, ?, ?)",
+              [product_id, dim.width, dim.height, dim.price]
+            );
+          }
+        }
+
+        // 3. Update product info
+        const updateFields = [];
+        const values = [];
+        
+        const fields = { name, description, category, color };
+        for (const [field, value] of Object.entries(fields)) {
+          if (value !== undefined) {
+            updateFields.push(`${field} = ?`);
+            values.push(value);
+          }
+        }
+
+        if (updateFields.length) {
+          values.push(product_id);
+          await connection.execute(
+            `UPDATE products SET ${updateFields.join(", ")} WHERE product_id = ?`,
+            values
           );
         }
-      }
 
-      // Step 3: Add new uploaded images
-      if (req.files && req.files.length > 0) {
-        for (const file of req.files) {
-          const webpPath = await convertImageToWebP(file.path);
-          await db.execute(
-            "INSERT INTO product_images (product_id, image_url) VALUES (?, ?)",
-            [product_id, webpPath]
-          );
-        }
-      }
+        await connection.commit();
+        
+        res.json({ message: "Product updated successfully" });
 
-      // Step 4: Update product info
-      const updateFields = [];
-      const values = [];
-
-      if (name) {
-        updateFields.push("name = ?");
-        values.push(name);
+      } catch (err) {
+        await connection.rollback();
+        console.error("Transaction error:", err);
+        res.status(500).json({ 
+          error: "Transaction failed",
+          details: err.message 
+        });
+      } finally {
+        connection.release();
       }
-      if (price) {
-        updateFields.push("price = ?");
-        values.push(price);
-      }
-      if (description) {
-        updateFields.push("description = ?");
-        values.push(description);
-      }
-      if (category) {
-        updateFields.push("category = ?");
-        values.push(category);
-      }
-
-      if (updateFields.length > 0) {
-        values.push(product_id);
-        const query = `UPDATE products SET ${updateFields.join(", ")} WHERE product_id = ?`;
-        await db.execute(query, values);
-      }
-
-      res.json({ message: "Product updated successfully" });
     } catch (err) {
       console.error("Update error:", err);
-      res.status(500).json({ error: "Failed to update product" });
+      res.status(500).json({ 
+        error: "Failed to update product",
+        details: err.message 
+      });
     }
   }
 );

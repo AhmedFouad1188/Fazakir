@@ -79,13 +79,15 @@ router.get("/", authenticateFirebaseToken, async (req, res) => {
     const firebaseUID = req.user.firebase_uid;
 
     const [orders] = await db.execute(
-      `SELECT * FROM orders WHERE firebase_uid = ? ORDER BY id DESC`,
+      `SELECT id, payment_method, total_price, created_at, status
+       FROM orders WHERE firebase_uid = ? ORDER BY id DESC`,
       [firebaseUID]
     );
 
     for (const order of orders) {
       const [items] = await db.execute(
-        `SELECT * FROM order_items WHERE order_id = ?`,
+        `SELECT product_id, name, image_url, quantity, price 
+        FROM order_items WHERE order_id = ?`,
         [order.id]
       );
 
@@ -158,6 +160,15 @@ router.put("/:orderId/cancel", authenticateFirebaseToken, async (req, res) => {
   const { orderId } = req.params;
 
   try {
+    const [orderRows] = await db.execute(
+      `SELECT * FROM orders WHERE id = ? AND firebase_uid = ?`,
+      [orderId, firebaseUID]
+    );
+    
+    if (!orderRows.length) {
+      return res.status(404).json({ message: "Unauthorized or order not found" });
+    }
+    
     await db.execute(
       `UPDATE orders SET status = 'cancelled' WHERE id = ? AND firebase_uid = ?`,
       [orderId, firebaseUID]
@@ -284,7 +295,7 @@ router.put('/updateStatus/:orderId', authenticateFirebaseToken, adminOnly, async
   }
 });
 
-router.put('/cancel/:orderId', async (req, res) => {
+router.put('/cancel/:orderId', authenticateFirebaseToken, adminOnly, async (req, res) => {
   const { orderId } = req.params;
   try {
     await db.execute("UPDATE orders SET status = 'cancelled' WHERE id = ?", [orderId]);

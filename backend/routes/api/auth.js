@@ -159,6 +159,15 @@ router.put("/accountupdate", authenticateFirebaseToken, async (req, res) => {
   try {
     const firebaseUID = req.user.firebase_uid; // Extract Firebase UID from middleware
 
+    const [userRows] = await db.execute(
+      `SELECT * FROM users WHERE firebase_uid = ?`,
+      [firebaseUID]
+    );
+    
+    if (!userRows.length) {
+      return res.status(404).json({ message: "Unauthorized or user not found" });
+    }
+
     // Extract form data from request body
     const { firstname, lastname, country, dial_code, mobile, governorate, district, street, building, floor, apartment, landmark } = req.body;
 
@@ -189,6 +198,15 @@ router.post('/soft-delete', authenticateFirebaseToken, async (req, res) => {
   const email = req.user.email;
 
   try {
+    const [userRows] = await db.execute(
+      `SELECT * FROM users WHERE firebase_uid = ?`,
+      [firebaseUID]
+    );
+    
+    if (!userRows.length) {
+      return res.status(404).json({ message: "Unauthorized or user not found" });
+    }
+    
     // 1. Disable Firebase user
     await admin.auth().updateUser(firebaseUID, { disabled: true });
 
@@ -213,6 +231,15 @@ router.post('/recover-account', async (req, res) => {
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
     const uid = decoded.uid;
+
+    const [userRows] = await db.execute(
+      `SELECT * FROM users WHERE firebase_uid = ?`,
+      [uid]
+    );
+    
+    if (!userRows.length) {
+      return res.status(404).json({ message: "Unauthorized or user not found" });
+    }
 
     // Enable Firebase user
     await admin.auth().updateUser(uid, { disabled: false });

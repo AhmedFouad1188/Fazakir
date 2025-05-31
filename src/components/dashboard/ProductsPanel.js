@@ -12,14 +12,15 @@ const ProductsPanel = () => {
   const [products, setProducts] = useState([]);
   const [product, setProduct] = useState({
     name: "",
-    price: "",
     description: "",
     category: "",
+    color: "",
   });
-  const [imageFiles, setImageFiles] = useState([]);
   const [previews, setPreviews] = useState([]);
-  const [editingProductId, setEditingProductId] = useState(null);
+  const [imageFiles, setImageFiles] = useState([]);
   const [existingImageUrls, setExistingImageUrls] = useState([]);
+  const [dimensions, setDimensions] = useState([]);
+  const [editingProductId, setEditingProductId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -90,6 +91,21 @@ const ProductsPanel = () => {
     setProduct({ ...product, [e.target.name]: e.target.value });
   };
 
+  const addInputDimensions = () => {
+    setDimensions((prev) => [...prev, { width: "", height: "" }]);
+  };
+
+  const removeInputDimensions = (index) => {
+    setDimensions((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleDimensionChange = (index, e) => {
+    const { name, value } = e.target;
+    setDimensions(prev => prev.map((dim, i) => 
+      i === index ? { ...dim, [name]: value } : dim
+    ));
+  };
+
   const addInput = () => {
     if (previews.length >= 5) {
       toast.warning("You can only upload up to 5 images.");
@@ -103,7 +119,7 @@ const ProductsPanel = () => {
     setPreviews((prev) => prev.filter((_, i) => i !== index));
     setImageFiles((prev) => prev.filter((_, i) => i !== index));
     setExistingImageUrls((prev) => prev.filter((_, i) => i !== index));
-  };  
+  };
 
   const handleImageChange = (e, index) => {
     const file = e.target.files[0];
@@ -132,86 +148,137 @@ const ProductsPanel = () => {
 
     const formData = new FormData();
     formData.append("name", product.name);
-    formData.append("price", product.price);
     formData.append("description", product.description);
     formData.append("category", product.category);
+    formData.append("color", product.color);
+    
+    // Handle dimensions - stringify the array for backend parsing
+    formData.append("dimensions", JSON.stringify(dimensions));
+    
+    // Add image files
     imageFiles.forEach((file) => {
-      if (file) formData.append("images", file);
+        if (file) formData.append("images", file);
     });
 
     try {
-      if (editingProductId) {
-        existingImageUrls.forEach(url => {
-          formData.append("remainingImages", url);
-        
-            confirmAlert({
-              title: `تحديث ${product.name} ؟`,
-              message: `تأكيد تحديث ${product.name} ؟`,
-              buttons: [
-                {
-                  label: 'نعم',
-                  onClick: async () => {
-
-                    await axios.put(`http://localhost:5000/api/products/${editingProductId}`, formData, {
-                      headers: { "Content-Type": "multipart/form-data" },
-                      withCredentials: true,
-                    });
-                    fetchProducts();
-                    toast.success(`تم تحديث ${product.name} بنجاح`);
-                  }
-                },
-                {
-                  label: 'لا'
-                  // No action needed; this closes the dialog
-                }
-              ]
+        if (editingProductId) {
+            // Add remaining images for update case
+            existingImageUrls.forEach(url => {
+                formData.append("remainingImages", url);
             });
-        });
-      } else {
-        confirmAlert({
-          title: 'إضافة منتج ؟',
-          message: `هل تريد إضافة هذا المنتج ؟`,
-          buttons: [
-            {
-              label: 'نعم',
-              onClick: async () => {
 
-                await axios.post("http://localhost:5000/api/products/add", formData, {
-                  headers: { "Content-Type": "multipart/form-data" },
-                  withCredentials: true,
+            await new Promise((resolve) => {
+                confirmAlert({
+                    title: `تحديث ${product.name} ؟`,
+                    message: `تأكيد تحديث ${product.name} ؟`,
+                    buttons: [
+                        {
+                            label: 'نعم',
+                            onClick: async () => {
+                                try {
+                                    const response = await axios.put(
+                                        `http://localhost:5000/api/products/${editingProductId}`,
+                                        formData,
+                                        {
+                                            headers: { "Content-Type": "multipart/form-data" },
+                                            withCredentials: true,
+                                        }
+                                    );
+                                    
+                                    fetchProducts();
+                                    toast.success(`تم تحديث ${product.name} بنجاح`);
+                                    resetForm();
+                                    resolve();
+                                } catch (error) {
+                                    console.error("Update error:", error.response?.data || error.message);
+                                    toast.error(error.response?.data?.message || "لم نتمكن من تحديث المنتج. حاول مرة اخرى");
+                                    resolve();
+                                }
+                            }
+                        },
+                        {
+                            label: 'لا',
+                            onClick: () => resolve()
+                        }
+                    ]
                 });
-                fetchProducts();
-                toast.success("تم إضافة المنتج بنجاح");
-              }
-            },
-            {
-              label: 'لا'
-              // No action needed; this closes the dialog
-            }
-          ]
-        });
-      }
-        
-      setProduct({ name: "", price: "", description: "", category: "" });
-      setImageFiles([]);
-      setPreviews([]);
-      setEditingProductId(null);
-      setExistingImageUrls([]);
+            });
+        } else {
+            await new Promise((resolve) => {
+                confirmAlert({
+                    title: 'إضافة منتج ؟',
+                    message: `هل تريد إضافة هذا المنتج ؟`,
+                    buttons: [
+                        {
+                            label: 'نعم',
+                            onClick: async () => {
+                                try {
+                                    const response = await axios.post(
+                                        "http://localhost:5000/api/products/add",
+                                        formData,
+                                        {
+                                            headers: { "Content-Type": "multipart/form-data" },
+                                            withCredentials: true,
+                                        }
+                                    );
+                                    
+                                    fetchProducts();
+                                    toast.success("تم إضافة المنتج بنجاح");
+                                    resetForm();
+                                    resolve();
+                                } catch (error) {
+                                    console.error("Create error:", error.response?.data || error.message);
+                                    toast.error(error.response?.data?.message || "لم نتمكن من إضافة المنتج. حاول مرة اخرى");
+                                    resolve();
+                                }
+                            }
+                        },
+                        {
+                            label: 'لا',
+                            onClick: () => resolve()
+                        }
+                    ]
+                });
+            });
+        }
     } catch (error) {
-      toast.error("Error saving product. Please check your input and try again.");
+        console.error("Submission error:", error);
+        toast.error("حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى");
     } finally {
-      setSubmitting(false);
+        setSubmitting(false);
     }
-  };
+};
+
+// Helper function to reset form
+const resetForm = () => {
+  setProduct({ name: "", description: "", category: "", color: "" });
+  setDimensions([]);
+  setPreviews([]);
+  setImageFiles([]);
+  setExistingImageUrls([]);
+  setEditingProductId(null);
+};
 
   const handleEdit = (product) => {
     setEditingProductId(product.product_id);
     setProduct({
       name: product.name,
-      price: product.price,
       description: product.description,
       category: product.category,
+      color: product.color,
     });
+
+    if (product.dimensions) {
+      const formattedDimensions = product.dimensions.map(dim => ({
+        width: dim.width,
+        height: dim.height,
+        price: dim.price
+      }));
+      setDimensions(formattedDimensions);
+    } else {
+      setDimensions([]);
+    }
+
     if (product.image_url) {
       const fullUrls = product.image_url.map(url => `http://localhost:5000${url}`);
       setPreviews(fullUrls);
@@ -294,16 +361,65 @@ const ProductsPanel = () => {
       <form onSubmit={handleSubmit} encType="multipart/form-data">
         <input type="text" name="name" placeholder="اسم المنتج" value={product.name} onChange={handleChange} required />
 
-        <input type="text" name="description" placeholder="الوصف" value={product.description} onChange={handleChange} required />
-
-        <input type="number" name="price" placeholder="السعر" value={product.price} onChange={handleChange} required />
+        <textarea name="description" placeholder="الوصف" value={product.description} onChange={handleChange} required />
 
         <select name="category" value={product.category} onChange={handleChange} required>
-          <option value="">اختار الفئة</option>
+          <option value="">حدد الفئة</option>
           <option value="quran">آيات قرآنية</option>
           <option value="art">طابع فنى</option>
           <option value="kids">أطفال</option>
         </select>
+
+        <select name="color" value={product.color} onChange={handleChange} required>
+          <option value="">حدد نوع الالوان</option>
+          <option value="warm">الوان دافئة</option>
+          <option value="cold">الوان باردة</option>
+        </select>
+
+        <div>
+          {dimensions.map((dim, index) => (
+            <div key={index}>
+              <input
+                type="number" 
+                min="1"
+                name="width" 
+                value={dim.width} 
+                onChange={(e) => handleDimensionChange(index, e)} 
+                placeholder="العرض" 
+                required 
+              />
+              <input 
+                type="number" 
+                min="1"
+                name="height" 
+                value={dim.height}
+                onChange={(e) => handleDimensionChange(index, e)} 
+                placeholder="الارتفاع" 
+                required 
+              />
+              <input
+                type="number"
+                min="1"
+                name="price"
+                value={dim.price}
+                onChange={(e) => handleDimensionChange(index, e)} 
+                placeholder="السعر"
+                required
+              />
+              <button type="button" onClick={() => removeInputDimensions(index)} className="danger">
+                حذف
+              </button>
+            </div>
+          ))}
+
+          <button
+            type="button"
+            onClick={addInputDimensions}
+            className="cold"
+          >
+            إضافة مقاس و سعر
+          </button>
+        </div>
 
         <div>
           {previews.map((src, index) => (
@@ -371,8 +487,20 @@ const ProductsPanel = () => {
                 <div onClick={() => navigate(`/product/${product.product_id}`)} style={{ cursor: "pointer" }}>
                   <p><span>اسم المنتج</span> {product.name}</p>
                   <p><span>الوصف</span> {product.description}</p>
-                  <p><span>السعر</span> {product.price}</p>
                   <p><span>الفئة</span> {mapToArabic(product.category).text}</p>
+                  <p><span>نوع الالوان</span> {mapToArabic(product.color).text}</p>
+                  <p><span>المقاسات والاسعار</span></p>
+                  <div>
+                    {product.dimensions &&
+                      product.dimensions.map((dim, idx) => (
+                        <div key={`${product.product_id}-${idx}`}>
+                        <p><span>العرض</span> {dim.width}</p>
+                        <p><span>الارتفاع</span> {dim.height}</p>
+                        <p><span>السعر</span> {dim.price}</p>
+                        </div>
+                      ))
+                    }
+                  </div>
                   <p><span>الصور</span></p>
                   <div className={styles.images}>
                     {product.image_url &&

@@ -178,7 +178,7 @@ const OrdersPanel = () => {
                           ))}
                         </>
                       ) : (
-                        <p>No items found for this order.</p>
+                        <p>لا يوجد أى أصناف داخل هذا الطلب</p>
                       )}
 
                       <div style={{ display: "flex", marginTop: "10vw" }}>

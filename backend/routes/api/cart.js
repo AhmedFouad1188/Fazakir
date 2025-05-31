@@ -11,7 +11,6 @@ router.get("/", authenticateFirebaseToken, async (req, res) => {
     const [cartItems] = await db.execute(`SELECT
                 c.product_id,
                 p.name AS name,
-                p.price AS price,
                 p.description AS description,
                 c.quantity,
                 (
@@ -61,6 +60,15 @@ router.post("/add", authenticateFirebaseToken, async (req, res) => {
 router.delete("/clear", authenticateFirebaseToken, async (req, res) => {
   const firebaseUID = req.user.firebase_uid; // Extract Firebase UID from middleware
   try {
+    const [cartRows] = await db.execute(
+      `SELECT * FROM cart WHERE firebase_uid = ?`,
+      [firebaseUID]
+    );
+    
+    if (!cartRows.length) {
+      return res.status(404).json({ message: "Unauthorized or cart is empty" });
+    }
+
     const sql = `DELETE FROM cart WHERE firebase_uid = ?`;
 
     await db.execute(sql, [firebaseUID]);
@@ -77,6 +85,15 @@ router.delete("/:product_id", authenticateFirebaseToken, async (req, res) => {
   const firebaseUID = req.user.firebase_uid; // Extract Firebase UID from middleware
   const productId = req.params.product_id;
   try {
+    const [cartRows] = await db.execute(
+      `SELECT * FROM cart WHERE firebase_uid = ?`,
+      [firebaseUID]
+    );
+    
+    if (!cartRows.length) {
+      return res.status(404).json({ message: "Unauthorized or cart is empty" });
+    }
+
     const sql = `DELETE FROM cart WHERE product_id = ? AND firebase_uid = ?`;
 
     await db.execute(sql, [productId, firebaseUID]);
@@ -93,6 +110,15 @@ router.put("/update", authenticateFirebaseToken, async (req, res) => {
   const firebaseUID = req.user.firebase_uid;
 
   try {
+    const [cartRows] = await db.execute(
+      `SELECT * FROM cart WHERE firebase_uid = ?`,
+      [firebaseUID]
+    );
+    
+    if (!cartRows.length) {
+      return res.status(404).json({ message: "Unauthorized or cart is empty" });
+    }
+    
     await db.execute(
       "UPDATE cart SET quantity = ? WHERE firebase_uid = ? AND product_id = ?",
       [quantity, firebaseUID, productId]

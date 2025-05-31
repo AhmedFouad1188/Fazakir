@@ -15,7 +15,7 @@ const KidsPanel = () => {
     const fetchKids = async () => {
         setLoading(true);
       try {
-        const res = await axios.get("http://localhost:5000/api/products?category=kids", { withCredentials: true });  
+        const res = await axios.get("http://localhost:5000/api/products/category?category=kids", { withCredentials: true });  
         if (res.data.length === 0) {
             console.log("No products available.");
           }

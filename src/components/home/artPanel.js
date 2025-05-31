@@ -15,7 +15,7 @@ const ArtPanel = () => {
     const fetchModern = async () => {
         setLoading(true);
       try {
-        const res = await axios.get("http://localhost:5000/api/products?category=art", { withCredentials: true });  
+        const res = await axios.get("http://localhost:5000/api/products/category?category=art", { withCredentials: true });  
         if (res.data.length === 0) {
             console.log("No products available.");
           }

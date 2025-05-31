@@ -8,7 +8,8 @@ export const mapToArabic = (value) => {
     'quran': { text: 'آيات قرآنية' },
     'art': { text: 'طابع فنى' },
     'kids': { text: 'أطفال' },
-
+    'cold': { text: 'باردة' },
+    'warm': { text: 'دافئة' },
   };
   
   return mapping[value] || value; // Fallback to original value if no mapping

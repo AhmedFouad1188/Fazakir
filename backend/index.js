@@ -1,4 +1,5 @@
 require("dotenv").config();
+const path = require('path');
 const express = require("express");
 const db = require("./db"); // 👈 Import the database connection
 const cors = require("cors");
@@ -35,7 +36,7 @@ app.use("/api/products", productsRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/orders", orderRoutes);
-app.use("/uploads", express.static("uploads"));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // 1️⃣ Global Rate Limit (100 requests per 15 min)
 const globalLimiter = rateLimit({

@@ -52,8 +52,7 @@ const CountrySelect = ({ onChange }) => {
         <img 
           src={country.flags.svg} 
           alt={country.name.common} 
-          width="30" 
-          style={{ minWidth: '30px' }} // Fixed width
+          style={{ width: "11vw", borderRadius: "0" }}
         />
         {country.name.common}
       </div>
